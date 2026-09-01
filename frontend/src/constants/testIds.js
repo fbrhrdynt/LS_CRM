@@ -1,5 +1,5 @@
 export const HOME = {
-  emergentLink: "home-emergent-link",
+  productLink: "home-product-link",
 };
 
 export const AUTH = {

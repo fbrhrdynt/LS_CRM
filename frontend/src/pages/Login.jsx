@@ -46,14 +46,12 @@ export default function LoginPage() {
     <div className="min-h-screen grid lg:grid-cols-2 bg-background">
       {/* Left brand panel */}
       <div className="hidden lg:flex flex-col justify-between border-r border-border p-12 bg-card">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 bg-primary text-primary-foreground grid place-items-center font-display font-semibold rounded-sm">
-            LS
-          </div>
-          <div>
-            <div className="font-display font-semibold text-lg">LogiSource Digital</div>
-            <div className="text-xs uppercase tracking-widest text-muted-foreground">Integrated System</div>
-          </div>
+        <div>
+          <img
+            src="/logisource-logo-light.png"
+            alt="LogiSource Digital"
+            className="h-16 w-auto object-contain"
+          />
         </div>
 
         <div className="max-w-md">
@@ -89,14 +87,12 @@ export default function LoginPage() {
       {/* Right form panel */}
       <div className="flex items-center justify-center p-6 lg:p-12">
         <div className="w-full max-w-md">
-          <div className="lg:hidden mb-8 flex items-center gap-3">
-            <div className="h-10 w-10 bg-primary text-primary-foreground grid place-items-center font-display font-semibold rounded-sm">
-              LS
-            </div>
-            <div>
-              <div className="font-display font-semibold">LogiSource Digital</div>
-              <div className="text-xs uppercase tracking-widest text-muted-foreground">Integrated System</div>
-            </div>
+          <div className="lg:hidden mb-8">
+            <img
+              src="/logisource-logo-light.png"
+              alt="LogiSource Digital"
+              className="h-14 w-auto object-contain"
+            />
           </div>
 
           <div className="label-eyebrow mb-2">Sign in</div>
@@ -172,12 +168,6 @@ export default function LoginPage() {
               <LogIn className="h-4 w-4 mr-2" strokeWidth={1.5} />
               {busy ? "Signing in..." : "Sign in"}
             </Button>
-
-            <div className="text-xs text-muted-foreground border border-dashed border-border p-3 rounded-sm">
-              <div className="label-eyebrow mb-1">Default credentials</div>
-              <div>Admin — admin@logisource.com / Admin@12345</div>
-              <div>Staff — staff@logisource.com / Staff@12345</div>
-            </div>
           </form>
         </div>
       </div>

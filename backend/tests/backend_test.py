@@ -12,7 +12,7 @@ from datetime import datetime, timezone, timedelta
 import pytest
 import requests
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://logisource-build.preview.emergentagent.com").rstrip("/")
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://crm.logisourcedigital.web.id").rstrip("/")
 ADMIN_EMAIL = "admin@logisource.com"
 ADMIN_PASSWORD = "Admin@12345"
 STAFF_EMAIL = "staff@logisource.com"
