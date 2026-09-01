@@ -1,0 +1,1975 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="LS Inventory is an internal inventory management system developed by LogiSource Digital for tracking tools, equipment, and consumable inventory."
+    >
+
+    <title>LS Inventory | LogiSource Digital</title>
+
+    <style>
+        :root {
+            --bg: #f6f8fb;
+            --surface: #ffffff;
+            --surface-soft: #f0f4f8;
+
+            --text: #142033;
+            --text-muted: #68758a;
+
+            --primary: #1769e0;
+            --primary-dark: #0d4fae;
+
+            --border: #e1e7ef;
+
+            --success: #12864b;
+
+            --shadow:
+                0 20px 50px rgba(
+                    17,
+                    37,
+                    63,
+                    0.08
+                );
+
+            --radius: 22px;
+        }
+
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+
+        body {
+            font-family:
+                Inter,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                Helvetica,
+                Arial,
+                sans-serif;
+
+            background:
+                linear-gradient(
+                    180deg,
+                    #ffffff 0%,
+                    var(--bg) 45%,
+                    #ffffff 100%
+                );
+
+            color: var(--text);
+
+            line-height: 1.6;
+        }
+
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+
+        .container {
+            width: min(
+                1120px,
+                calc(100% - 40px)
+            );
+
+            margin: 0 auto;
+        }
+
+
+        /* ========================================
+           NAVIGATION
+        ======================================== */
+
+        nav {
+            position: sticky;
+            top: 0;
+
+            z-index: 100;
+
+            background:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.88
+                );
+
+            backdrop-filter: blur(18px);
+
+            border-bottom:
+                1px solid
+                rgba(
+                    225,
+                    231,
+                    239,
+                    0.8
+                );
+        }
+
+
+        .navbar {
+            min-height: 72px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 20px;
+        }
+
+
+        .brand {
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+        }
+
+
+        .brand-icon {
+            width: 42px;
+            height: 42px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #1769e0,
+                    #22a7f0
+                );
+
+            border-radius: 12px;
+
+            color: #ffffff;
+
+            font-size: 15px;
+
+            font-weight: 800;
+
+            box-shadow:
+                0 8px 20px
+                rgba(
+                    23,
+                    105,
+                    224,
+                    0.25
+                );
+        }
+
+
+        .brand-text strong {
+            display: block;
+
+            font-size: 16px;
+
+            line-height: 1.2;
+        }
+
+
+        .brand-text span {
+            display: block;
+
+            margin-top: 2px;
+
+            color: var(--text-muted);
+
+            font-size: 12px;
+        }
+
+
+        .nav-links {
+            display: flex;
+
+            align-items: center;
+
+            gap: 28px;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            color: var(--text-muted);
+        }
+
+
+        .nav-links a {
+            transition: 0.2s;
+        }
+
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+
+        /* ========================================
+           HERO
+        ======================================== */
+
+        .hero {
+            min-height: 620px;
+
+            display: grid;
+
+            grid-template-columns:
+                1.15fr
+                0.85fr;
+
+            align-items: center;
+
+            gap: 80px;
+
+            padding:
+                90px
+                0
+                80px;
+        }
+
+
+        .hero-badge {
+            display: inline-flex;
+
+            align-items: center;
+
+            gap: 8px;
+
+            padding:
+                7px
+                12px;
+
+            margin-bottom: 24px;
+
+            border:
+                1px solid
+                #cfe0f7;
+
+            border-radius: 999px;
+
+            background: #eef6ff;
+
+            color: var(--primary-dark);
+
+            font-size: 12px;
+
+            font-weight: 700;
+        }
+
+
+        .hero-badge-dot {
+            width: 8px;
+            height: 8px;
+
+            border-radius: 50%;
+
+            background: var(--success);
+        }
+
+
+        .hero h1 {
+            max-width: 760px;
+
+            font-size:
+                clamp(
+                    42px,
+                    6vw,
+                    68px
+                );
+
+            line-height: 1.05;
+
+            letter-spacing: -2px;
+
+            margin-bottom: 24px;
+        }
+
+
+        .hero h1 span {
+            color: var(--primary);
+        }
+
+
+        .hero-description {
+            max-width: 650px;
+
+            font-size: 18px;
+
+            color: var(--text-muted);
+
+            margin-bottom: 32px;
+        }
+
+
+        .hero-actions {
+            display: flex;
+
+            flex-wrap: wrap;
+
+            gap: 12px;
+        }
+
+
+        .button {
+            min-height: 48px;
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding:
+                0
+                20px;
+
+            border-radius: 12px;
+
+            font-size: 14px;
+
+            font-weight: 700;
+
+            transition:
+                transform 0.2s,
+                box-shadow 0.2s,
+                background 0.2s;
+        }
+
+
+        .button:hover {
+            transform: translateY(-2px);
+        }
+
+
+        .button-primary {
+            background: var(--primary);
+
+            color: #ffffff;
+
+            box-shadow:
+                0 10px 25px
+                rgba(
+                    23,
+                    105,
+                    224,
+                    0.24
+                );
+        }
+
+
+        .button-primary:hover {
+            background:
+                var(--primary-dark);
+        }
+
+
+        .button-secondary {
+            background:
+                var(--surface);
+
+            border:
+                1px solid
+                var(--border);
+
+            color: var(--text);
+        }
+
+
+        /* ========================================
+           DEVICE MOCKUP
+        ======================================== */
+
+        .device-wrapper {
+            position: relative;
+        }
+
+
+        .device-wrapper::before {
+            content: "";
+
+            position: absolute;
+
+            width: 320px;
+            height: 320px;
+
+            top: 50%;
+            left: 50%;
+
+            transform:
+                translate(
+                    -50%,
+                    -50%
+                );
+
+            background:
+                radial-gradient(
+                    circle,
+                    rgba(
+                        23,
+                        105,
+                        224,
+                        0.22
+                    ),
+                    transparent 68%
+                );
+
+            filter: blur(15px);
+        }
+
+
+        .device {
+            position: relative;
+
+            max-width: 380px;
+
+            margin: 0 auto;
+
+            padding: 18px;
+
+            background: #172132;
+
+            border-radius: 28px;
+
+            box-shadow:
+                0 30px 70px
+                rgba(
+                    15,
+                    30,
+                    50,
+                    0.25
+                );
+
+            transform:
+                rotate(2deg);
+        }
+
+
+        .device-screen {
+            min-height: 455px;
+
+            padding: 22px;
+
+            background:
+                linear-gradient(
+                    180deg,
+                    #0e1726,
+                    #111e31
+                );
+
+            border-radius: 15px;
+
+            color: white;
+        }
+
+
+        .device-header {
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            padding-bottom: 16px;
+
+            border-bottom:
+                1px solid
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.1
+                );
+        }
+
+
+        .device-logo {
+            width: 34px;
+            height: 34px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            background: var(--primary);
+
+            border-radius: 8px;
+
+            font-size: 11px;
+
+            font-weight: 800;
+        }
+
+
+        .device-title strong {
+            display: block;
+
+            font-size: 13px;
+        }
+
+
+        .device-title span {
+            font-size: 9px;
+
+            color: #91a4bf;
+        }
+
+
+        .nfc-circle {
+            width: 105px;
+            height: 105px;
+
+            margin:
+                68px
+                auto
+                24px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            border:
+                2px solid
+                rgba(
+                    74,
+                    148,
+                    255,
+                    0.7
+                );
+
+            border-radius: 50%;
+
+            background:
+                rgba(
+                    23,
+                    105,
+                    224,
+                    0.13
+                );
+
+            color: #72b0ff;
+
+            font-size: 18px;
+
+            font-weight: 800;
+
+            box-shadow:
+                0 0 50px
+                rgba(
+                    23,
+                    105,
+                    224,
+                    0.15
+                );
+        }
+
+
+        .device-screen h3 {
+            text-align: center;
+
+            font-size: 22px;
+        }
+
+
+        .device-screen p {
+            text-align: center;
+
+            margin-top: 8px;
+
+            color: #8396b3;
+
+            font-size: 11px;
+        }
+
+
+        .device-status {
+            margin-top: 72px;
+
+            padding-top: 12px;
+
+            border-top:
+                1px solid
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.08
+                );
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            font-size: 9px;
+
+            color: #89a0bd;
+        }
+
+
+        .online {
+            display: inline-flex;
+
+            align-items: center;
+
+            gap: 6px;
+        }
+
+
+        .online-dot {
+            width: 6px;
+            height: 6px;
+
+            border-radius: 50%;
+
+            background: #38ce7c;
+        }
+
+
+        /* ========================================
+           SECTIONS
+        ======================================== */
+
+        section {
+            padding:
+                90px
+                0;
+        }
+
+
+        .section-header {
+            max-width: 700px;
+
+            margin-bottom: 44px;
+        }
+
+
+        .section-label {
+            display: block;
+
+            margin-bottom: 10px;
+
+            color: var(--primary);
+
+            font-size: 12px;
+
+            font-weight: 800;
+
+            letter-spacing: 1.5px;
+
+            text-transform: uppercase;
+        }
+
+
+        .section-header h2 {
+            font-size:
+                clamp(
+                    30px,
+                    4vw,
+                    44px
+                );
+
+            letter-spacing: -1px;
+
+            line-height: 1.15;
+
+            margin-bottom: 15px;
+        }
+
+
+        .section-header p {
+            color: var(--text-muted);
+
+            font-size: 16px;
+        }
+
+
+        /* ========================================
+           FEATURES
+        ======================================== */
+
+        .features-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    3,
+                    1fr
+                );
+
+            gap: 18px;
+        }
+
+
+        .feature {
+            padding: 28px;
+
+            background: var(--surface);
+
+            border:
+                1px solid
+                var(--border);
+
+            border-radius:
+                var(--radius);
+
+            box-shadow:
+                0 10px 30px
+                rgba(
+                    17,
+                    37,
+                    63,
+                    0.04
+                );
+        }
+
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+
+            margin-bottom: 22px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            border-radius: 13px;
+
+            background: #eef5ff;
+
+            color: var(--primary);
+
+            font-size: 20px;
+        }
+
+
+        .feature h3 {
+            margin-bottom: 8px;
+
+            font-size: 17px;
+        }
+
+
+        .feature p {
+            color: var(--text-muted);
+
+            font-size: 14px;
+        }
+
+
+        /* ========================================
+           GOOGLE API
+        ======================================== */
+
+        .google-section {
+            background:
+                var(--surface-soft);
+        }
+
+
+        .google-box {
+            display: grid;
+
+            grid-template-columns:
+                0.9fr
+                1.1fr;
+
+            gap: 60px;
+
+            align-items: center;
+
+            padding: 50px;
+
+            background: var(--surface);
+
+            border:
+                1px solid
+                var(--border);
+
+            border-radius: 28px;
+
+            box-shadow: var(--shadow);
+        }
+
+
+        .google-icon {
+            width: 90px;
+            height: 90px;
+
+            margin-bottom: 25px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            border-radius: 22px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #e9f3ff,
+                    #f5f9ff
+                );
+
+            color: var(--primary);
+
+            font-weight: 800;
+
+            font-size: 22px;
+        }
+
+
+        .google-box h2 {
+            margin-bottom: 16px;
+
+            font-size: 34px;
+        }
+
+
+        .google-box p {
+            color: var(--text-muted);
+
+            font-size: 15px;
+        }
+
+
+        .api-list {
+            display: grid;
+
+            gap: 12px;
+        }
+
+
+        .api-item {
+            display: flex;
+
+            align-items: flex-start;
+
+            gap: 12px;
+
+            padding: 16px;
+
+            border:
+                1px solid
+                var(--border);
+
+            border-radius: 14px;
+        }
+
+
+        .api-check {
+            flex-shrink: 0;
+
+            width: 24px;
+            height: 24px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            border-radius: 50%;
+
+            background: #e7f7ef;
+
+            color: var(--success);
+
+            font-size: 12px;
+
+            font-weight: 800;
+        }
+
+
+        .api-item strong {
+            display: block;
+
+            margin-bottom: 2px;
+
+            font-size: 14px;
+        }
+
+
+        .api-item span {
+            display: block;
+
+            color: var(--text-muted);
+
+            font-size: 12px;
+        }
+
+
+        /* ========================================
+           SECURITY
+        ======================================== */
+
+        .security-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    3,
+                    1fr
+                );
+
+            gap: 18px;
+        }
+
+
+        .security-card {
+            padding: 24px;
+
+            border:
+                1px solid
+                var(--border);
+
+            border-radius: 18px;
+
+            background:
+                var(--surface);
+        }
+
+
+        .security-card strong {
+            display: block;
+
+            margin-bottom: 8px;
+        }
+
+
+        .security-card p {
+            color: var(--text-muted);
+
+            font-size: 13px;
+        }
+
+
+        /* ========================================
+           CTA
+        ======================================== */
+
+        .cta {
+            padding:
+                60px
+                0
+                90px;
+        }
+
+
+        .cta-box {
+            padding:
+                55px
+                40px;
+
+            text-align: center;
+
+            border-radius: 28px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #0d4fae,
+                    #1769e0
+                );
+
+            color: #ffffff;
+        }
+
+
+        .cta-box h2 {
+            font-size: 35px;
+
+            margin-bottom: 12px;
+        }
+
+
+        .cta-box p {
+            max-width: 650px;
+
+            margin:
+                0 auto
+                25px;
+
+            color:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.8
+                );
+        }
+
+
+        .cta-box .button {
+            background: white;
+
+            color: var(--primary-dark);
+        }
+
+
+        /* ========================================
+           FOOTER
+        ======================================== */
+
+        footer {
+            border-top:
+                1px solid
+                var(--border);
+
+            background: white;
+        }
+
+
+        .footer-content {
+            min-height: 150px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 30px;
+        }
+
+
+        .footer-brand {
+            max-width: 400px;
+        }
+
+
+        .footer-brand strong {
+            display: block;
+
+            margin-bottom: 5px;
+
+            font-size: 16px;
+        }
+
+
+        .footer-brand p {
+            color: var(--text-muted);
+
+            font-size: 12px;
+        }
+
+
+        .footer-links {
+            display: flex;
+
+            flex-wrap: wrap;
+
+            gap: 20px;
+
+            color: var(--text-muted);
+
+            font-size: 12px;
+
+            font-weight: 600;
+        }
+
+
+        .footer-links a:hover {
+            color: var(--primary);
+        }
+
+
+        .copyright {
+            padding:
+                18px
+                0;
+
+            border-top:
+                1px solid
+                var(--border);
+
+            text-align: center;
+
+            color: #8a95a5;
+
+            font-size: 11px;
+        }
+
+
+        /* ========================================
+           RESPONSIVE
+        ======================================== */
+
+        @media (
+            max-width: 850px
+        ) {
+
+            .nav-links {
+                display: none;
+            }
+
+
+            .hero {
+                grid-template-columns:
+                    1fr;
+
+                gap: 55px;
+
+                padding-top: 70px;
+            }
+
+
+            .hero-content {
+                text-align: center;
+            }
+
+
+            .hero-description {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+
+            .hero-actions {
+                justify-content: center;
+            }
+
+
+            .features-grid,
+            .security-grid {
+                grid-template-columns:
+                    1fr
+                    1fr;
+            }
+
+
+            .google-box {
+                grid-template-columns:
+                    1fr;
+            }
+
+        }
+
+
+        @media (
+            max-width: 600px
+        ) {
+
+            .container {
+                width:
+                    min(
+                        100% - 24px,
+                        1120px
+                    );
+            }
+
+
+            .hero {
+                padding-top: 55px;
+            }
+
+
+            .hero h1 {
+                letter-spacing: -1.3px;
+            }
+
+
+            .features-grid,
+            .security-grid {
+                grid-template-columns:
+                    1fr;
+            }
+
+
+            .google-box {
+                padding: 28px;
+            }
+
+
+            .device {
+                max-width: 310px;
+            }
+
+
+            .footer-content {
+                padding:
+                    35px
+                    0;
+
+                flex-direction: column;
+
+                align-items: flex-start;
+            }
+
+        }
+
+    </style>
+</head>
+
+
+<body>
+
+
+<!-- ========================================
+     NAVBAR
+======================================== -->
+
+<nav>
+
+    <div class="container navbar">
+
+        <a
+            href="#"
+            class="brand"
+        >
+
+            <div class="brand-icon">
+                LS
+            </div>
+
+
+            <div class="brand-text">
+
+                <strong>
+                    LS Inventory
+                </strong>
+
+                <span>
+                    by LogiSource Digital
+                </span>
+
+            </div>
+
+        </a>
+
+
+        <div class="nav-links">
+
+            <a href="#about">
+                About
+            </a>
+
+            <a href="#features">
+                Features
+            </a>
+
+            <a href="#google">
+                Google API
+            </a>
+
+            <a
+                href="/ls-inventory/privacy"
+            >
+                Privacy
+            </a>
+
+        </div>
+
+    </div>
+
+</nav>
+
+
+<!-- ========================================
+     HERO
+======================================== -->
+
+<header>
+
+    <div class="container hero">
+
+        <div class="hero-content">
+
+            <div class="hero-badge">
+
+                <span
+                    class="hero-badge-dot">
+                </span>
+
+                Internal Inventory Management System
+
+            </div>
+
+
+            <h1>
+
+                Smarter inventory
+                management with
+
+                <span>
+                    LS Inventory.
+                </span>
+
+            </h1>
+
+
+            <p class="hero-description">
+
+                LS Inventory is an internal inventory
+                management system developed by LogiSource
+                Digital for tracking tools, equipment,
+                borrowed assets, and consumable stock.
+
+            </p>
+
+
+            <div class="hero-actions">
+
+                <a
+                    href="#features"
+                    class="
+                        button
+                        button-primary
+                    "
+                >
+                    Explore Features
+                </a>
+
+
+                <a
+                    href="#google"
+                    class="
+                        button
+                        button-secondary
+                    "
+                >
+                    Google API Usage
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <div class="device-wrapper">
+
+            <div class="device">
+
+                <div class="device-screen">
+
+                    <div class="device-header">
+
+                        <div class="device-logo">
+                            LS
+                        </div>
+
+
+                        <div class="device-title">
+
+                            <strong>
+                                LS Inventory
+                            </strong>
+
+                            <span>
+                                Inventory Terminal
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="nfc-circle">
+                        NFC
+                    </div>
+
+
+                    <h3>
+                        Tap Your Card
+                    </h3>
+
+
+                    <p>
+
+                        Present your authorized
+                        NFC/RFID card to continue.
+
+                    </p>
+
+
+                    <div class="device-status">
+
+                        <div class="online">
+
+                            <span
+                                class="online-dot">
+                            </span>
+
+                            System Ready
+
+                        </div>
+
+                        <span>
+                            v1.0.0
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+<!-- ========================================
+     ABOUT
+======================================== -->
+
+<section id="about">
+
+    <div class="container">
+
+        <div class="section-header">
+
+            <span class="section-label">
+                About
+            </span>
+
+
+            <h2>
+                Built for practical inventory operations.
+            </h2>
+
+
+            <p>
+
+                LS Inventory combines physical inventory
+                identification, user authentication and
+                cloud synchronization into a simple
+                inventory terminal designed for internal
+                operational use.
+
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ========================================
+     FEATURES
+======================================== -->
+
+<section
+    id="features"
+    style="
+        padding-top: 0;
+    "
+>
+
+    <div class="container">
+
+        <div class="features-grid">
+
+
+            <div class="feature">
+
+                <div class="feature-icon">
+                    ◉
+                </div>
+
+                <h3>
+                    RFID / NFC Authentication
+                </h3>
+
+                <p>
+
+                    Authorized users identify themselves
+                    using registered NFC or RFID cards
+                    before performing inventory operations.
+
+                </p>
+
+            </div>
+
+
+            <div class="feature">
+
+                <div class="feature-icon">
+                    ▦
+                </div>
+
+                <h3>
+                    QR Item Identification
+                </h3>
+
+                <p>
+
+                    Inventory items use unique QR codes
+                    and UUID identifiers to provide
+                    consistent item identification.
+
+                </p>
+
+            </div>
+
+
+            <div class="feature">
+
+                <div class="feature-icon">
+                    ⇄
+                </div>
+
+                <h3>
+                    Borrow & Return
+                </h3>
+
+                <p>
+
+                    Track borrowed equipment, current
+                    borrower information, return activity,
+                    and transaction timestamps.
+
+                </p>
+
+            </div>
+
+
+            <div class="feature">
+
+                <div class="feature-icon">
+                    −
+                </div>
+
+                <h3>
+                    Consumable Management
+                </h3>
+
+                <p>
+
+                    Record consumable usage, automatically
+                    reduce stock and monitor low-stock
+                    or out-of-stock conditions.
+
+                </p>
+
+            </div>
+
+
+            <div class="feature">
+
+                <div class="feature-icon">
+                    ☁
+                </div>
+
+                <h3>
+                    Cloud Synchronization
+                </h3>
+
+                <p>
+
+                    Authorized inventory information and
+                    transactions are synchronized with
+                    Google Sheets.
+
+                </p>
+
+            </div>
+
+
+            <div class="feature">
+
+                <div class="feature-icon">
+                    ↻
+                </div>
+
+                <h3>
+                    Offline Queue
+                </h3>
+
+                <p>
+
+                    Transactions can be temporarily stored
+                    locally when connectivity is unavailable
+                    and synchronized when access is restored.
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ========================================
+     GOOGLE API
+======================================== -->
+
+<section
+    id="google"
+    class="google-section"
+>
+
+    <div class="container">
+
+        <div class="google-box">
+
+
+            <div>
+
+                <div class="google-icon">
+                    API
+                </div>
+
+
+                <h2>
+                    Google Sheets Integration
+                </h2>
+
+
+                <p>
+
+                    LS Inventory uses the Google Sheets API
+                    to access only the Google Spreadsheet
+                    explicitly authorized by the system
+                    administrator.
+
+                    The integration is used exclusively for
+                    inventory management functionality.
+
+                </p>
+
+            </div>
+
+
+            <div class="api-list">
+
+
+                <div class="api-item">
+
+                    <div class="api-check">
+                        ✓
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            Inventory Items
+                        </strong>
+
+                        <span>
+
+                            Read and update inventory item
+                            status, stock and item information.
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="api-item">
+
+                    <div class="api-check">
+                        ✓
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            Authorized Users
+                        </strong>
+
+                        <span>
+
+                            Read user records required for
+                            NFC/RFID identification.
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="api-item">
+
+                    <div class="api-check">
+                        ✓
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            Transaction Records
+                        </strong>
+
+                        <span>
+
+                            Store Borrow, Return and
+                            Consumable transaction records.
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="api-item">
+
+                    <div class="api-check">
+                        ✓
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            System Configuration
+                        </strong>
+
+                        <span>
+
+                            Read authorized system settings
+                            used by the LS Inventory device.
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ========================================
+     DATA & SECURITY
+======================================== -->
+
+<section>
+
+    <div class="container">
+
+        <div class="section-header">
+
+            <span class="section-label">
+                Privacy & Security
+            </span>
+
+
+            <h2>
+                Designed for controlled internal use.
+            </h2>
+
+
+            <p>
+
+                LS Inventory processes only the information
+                required to operate inventory management
+                functionality.
+
+            </p>
+
+        </div>
+
+
+        <div class="security-grid">
+
+
+            <div class="security-card">
+
+                <strong>
+                    No Advertising
+                </strong>
+
+                <p>
+
+                    Google user data is not used for
+                    advertising, behavioral profiling,
+                    or marketing purposes.
+
+                </p>
+
+            </div>
+
+
+            <div class="security-card">
+
+                <strong>
+                    No Sale of Data
+                </strong>
+
+                <p>
+
+                    LS Inventory does not sell Google
+                    user data or inventory information
+                    to third parties.
+
+                </p>
+
+            </div>
+
+
+            <div class="security-card">
+
+                <strong>
+                    Restricted Access
+                </strong>
+
+                <p>
+
+                    Inventory operations are intended for
+                    authorized users and authorized
+                    LS Inventory devices.
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ========================================
+     CTA
+======================================== -->
+
+<div class="container cta">
+
+    <div class="cta-box">
+
+        <h2>
+            LogiSource Digital
+        </h2>
+
+
+        <p>
+
+            LS Inventory is developed as part of
+            LogiSource Digital's internal digital
+            solutions for inventory and operational
+            management.
+
+        </p>
+
+
+        <a
+            href="https://logisourcedigital.web.id/"
+            class="button"
+        >
+            Visit LogiSource Digital
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- ========================================
+     FOOTER
+======================================== -->
+
+<footer>
+
+    <div class="container footer-content">
+
+        <div class="footer-brand">
+
+            <strong>
+                LS Inventory
+            </strong>
+
+
+            <p>
+
+                Internal inventory management system
+                developed by LogiSource Digital.
+
+            </p>
+
+        </div>
+
+
+        <div class="footer-links">
+
+            <a href="/ls-inventory">
+                Home
+            </a>
+
+            <a href="/ls-inventory/privacy">
+                Privacy Policy
+            </a>
+
+            <a href="/ls-inventory/terms">
+                Terms of Service
+            </a>
+
+            <a
+                href="https://logisourcedigital.web.id/"
+            >
+                LogiSource Digital
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <div class="copyright">
+
+        © 2026 LogiSource Digital.
+        All rights reserved.
+
+    </div>
+
+</footer>
+
+
+</body>
+
+</html>

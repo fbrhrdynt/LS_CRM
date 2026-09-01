@@ -1,0 +1,158 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 60 5% 97%;
+    --foreground: 0 0% 7%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 7%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 7%;
+    --primary: 224 100% 33%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 60 5% 93%;
+    --secondary-foreground: 0 0% 7%;
+    --muted: 60 5% 93%;
+    --muted-foreground: 0 0% 33%;
+    --accent: 60 5% 93%;
+    --accent-foreground: 0 0% 7%;
+    --destructive: 8 78% 48%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 143 100% 27%;
+    --warning: 40 100% 48%;
+    --border: 60 4% 88%;
+    --input: 60 4% 88%;
+    --ring: 224 100% 33%;
+    --chart-1: 224 100% 33%;
+    --chart-2: 143 100% 27%;
+    --chart-3: 40 100% 48%;
+    --chart-4: 8 78% 48%;
+    --chart-5: 200 15% 40%;
+    --radius: 0.375rem;
+  }
+
+  .dark {
+    --background: 0 0% 4%;
+    --foreground: 0 0% 93%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 93%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 93%;
+    --primary: 224 100% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 93%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 240 5% 65%;
+    --accent: 0 0% 15%;
+    --accent-foreground: 0 0% 93%;
+    --destructive: 4 100% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 143 100% 38%;
+    --warning: 45 100% 50%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 224 100% 60%;
+    --chart-1: 224 100% 60%;
+    --chart-2: 143 100% 38%;
+    --chart-3: 45 100% 50%;
+    --chart-4: 4 100% 60%;
+    --chart-5: 220 10% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-display {
+    font-family: "Outfit", ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.01em;
+  }
+  code,
+  pre,
+  .font-mono {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  .label-eyebrow {
+    font-family: "IBM Plex Sans", sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-size: 10px;
+    font-weight: 600;
+    color: hsl(var(--muted-foreground));
+  }
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  .surface {
+    @apply bg-card border border-border;
+  }
+  .grid-lines-y > * + * {
+    @apply border-t border-border;
+  }
+  .grid-lines-x > * + * {
+    @apply border-l border-border;
+  }
+  .hover-row {
+    @apply transition-colors duration-150 hover:bg-muted/60;
+  }
+}
+
+/* Sonner override */
+[data-sonner-toaster] {
+  font-family: "IBM Plex Sans", sans-serif !important;
+}
+
+@layer base {
+  [data-debug-wrapper="true"] {
+    display: contents !important;
+  }
+  [data-debug-wrapper="true"] > * {
+    margin-left: inherit;
+    margin-right: inherit;
+    margin-top: inherit;
+    margin-bottom: inherit;
+    padding-left: inherit;
+    padding-right: inherit;
+    padding-top: inherit;
+    padding-bottom: inherit;
+    column-gap: inherit;
+    row-gap: inherit;
+    gap: inherit;
+    border-left-width: inherit;
+    border-right-width: inherit;
+    border-top-width: inherit;
+    border-bottom-width: inherit;
+    border-left-style: inherit;
+    border-right-style: inherit;
+    border-top-style: inherit;
+    border-bottom-style: inherit;
+    border-left-color: inherit;
+    border-right-color: inherit;
+    border-top-color: inherit;
+    border-bottom-color: inherit;
+  }
+}
