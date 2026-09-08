@@ -25,6 +25,13 @@ BACKUP_COLLECTIONS = [
 RESTORE_COLLECTIONS = set(BACKUP_COLLECTIONS) - {"users"}
 MAX_RESTORE_BYTES = 25 * 1024 * 1024
 
+# Resolve paths from this file instead of assuming the app lives under /app.
+# Works for /opt/logisource, local development, and other deployment paths.
+BACKEND_DIR = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = BACKEND_DIR.parent
+FRONTEND_DIR = PROJECT_ROOT / "frontend"
+MEMORY_DIR = PROJECT_ROOT / "memory"
+
 
 @router.get("/installation-guide/pdf")
 async def installation_guide_pdf(user: dict = Depends(get_current_user)):
@@ -126,7 +133,7 @@ async def full_export(include_build: bool = False, admin: dict = Depends(require
             try:
                 subprocess.run(
                     ["yarn", "build"],
-                    cwd="/app/frontend",
+                    cwd=str(FRONTEND_DIR),
                     check=True, capture_output=True, timeout=240,
                     env={**os.environ, "CI": "false", "GENERATE_SOURCEMAP": "false"},
                 )
@@ -179,10 +186,10 @@ async def full_export(include_build: bool = False, admin: dict = Depends(require
                     except Exception:
                         pass
 
-        _copy_tree(Path("/app/backend"), workdir / "backend")
-        _copy_tree(Path("/app/frontend"), workdir / "frontend")
-        _copy_tree(Path("/app/memory"), workdir / "memory")
-        _copy_tree(Path("/app/backend/tests"), workdir / "backend" / "tests")
+        _copy_tree(BACKEND_DIR, workdir / "backend")
+        _copy_tree(FRONTEND_DIR, workdir / "frontend")
+        _copy_tree(MEMORY_DIR, workdir / "memory")
+        _copy_tree(BACKEND_DIR / "tests", workdir / "backend" / "tests")
 
         # 2c. Always embed the Installation Guide PDF into the ZIP root
         try:
@@ -196,7 +203,7 @@ async def full_export(include_build: bool = False, admin: dict = Depends(require
         # 2b. Copy compiled build if requested (and it exists)
         build_size_kb = 0
         if include_build and not build_warning:
-            build_src = Path("/app/frontend/build")
+            build_src = FRONTEND_DIR / "build"
             if build_src.exists():
                 build_dst = workdir / "frontend" / "build"
                 _copy_tree(build_src, build_dst, prune_default=False)  # keep static/ etc.
@@ -262,7 +269,7 @@ Build:    {"included" if include_build and not build_warning else "not included"
 - `frontend/`        — React app source (run `yarn install` to restore node_modules)
 {"- `frontend/build/`  — Pre-built static bundle ready for static hosting" if include_build and not build_warning else ""}
 - `database/`        — MongoDB dump (BSON via mongodump, or JSON fallback if mongodump unavailable)
-- `memory/`          — PRD.md, test_credentials.md
+- `memory/`          — non-secret project memory files
 
 ## Restore locally
 
