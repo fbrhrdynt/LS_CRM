@@ -31,8 +31,11 @@ logger = logging.getLogger("logisource")
 app = FastAPI(title="LogiSource Integrated System")
 
 # CORS
-origins_env = os.environ.get("CORS_ORIGINS", "*")
-allow_origins = [o.strip() for o in origins_env.split(",")] if origins_env else ["*"]
+origins_env = os.environ.get(
+    "CORS_ORIGINS",
+    "http://localhost:3000,http://127.0.0.1:3000",
+)
+allow_origins = [o.strip() for o in origins_env.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,

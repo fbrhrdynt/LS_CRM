@@ -1,3 +1,4 @@
+import os
 from fastapi import APIRouter, Depends, HTTPException, Response
 
 from auth import create_access_token, get_current_user, hash_password, verify_password
@@ -8,6 +9,18 @@ from utils import log_activity, utc_now_iso
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
+def _env_bool(name: str, default: bool) -> bool:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _cookie_samesite() -> str:
+    value = os.environ.get("COOKIE_SAMESITE", "lax").strip().lower()
+    return value if value in {"lax", "strict", "none"} else "lax"
+
+
 @router.post("/login")
 async def login(payload: LoginIn, response: Response):
     db = get_db()
@@ -15,14 +28,15 @@ async def login(payload: LoginIn, response: Response):
     user = await db.users.find_one({"email": email}, {"_id": 0})
     if not user or not verify_password(payload.password, user.get("password_hash", "")):
         raise HTTPException(status_code=401, detail="Invalid email or password")
-    token = create_access_token(user["id"], user["email"], user["role"])
+    token = create_access_token(user["id"], user["email"], user["role"], remember=payload.remember)
+    remember_days = int(os.environ.get("JWT_REMEMBER_DAYS", "7"))
     response.set_cookie(
         key="access_token",
         value=token,
         httponly=True,
-        secure=True,
-        samesite="lax",
-        max_age=60 * 60 * 24 * 7 if payload.remember else 60 * 60 * 12,
+        secure=_env_bool("COOKIE_SECURE", True),
+        samesite=_cookie_samesite(),
+        max_age=remember_days * 24 * 60 * 60 if payload.remember else None,
         path="/",
     )
     user.pop("password_hash", None)
@@ -48,8 +62,8 @@ async def change_password(payload: ChangePasswordIn, user: dict = Depends(get_cu
     full = await db.users.find_one({"id": user["id"]})
     if not full or not verify_password(payload.old_password, full["password_hash"]):
         raise HTTPException(status_code=400, detail="Current password is incorrect")
-    if len(payload.new_password) < 6:
-        raise HTTPException(status_code=400, detail="New password must be at least 6 characters")
+    if len(payload.new_password) < 12:
+        raise HTTPException(status_code=400, detail="New password must be at least 12 characters")
     await db.users.update_one(
         {"id": user["id"]},
         {"$set": {"password_hash": hash_password(payload.new_password), "updated_at": utc_now_iso()}},

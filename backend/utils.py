@@ -73,6 +73,8 @@ async def next_product_code(kind: str = "goods") -> str:
 
 
 def paginate(items: list, page: int, per_page: int) -> dict:
+    page = max(1, int(page or 1))
+    per_page = max(1, min(int(per_page or 20), 200))
     total = len(items)
     start = (page - 1) * per_page
     end = start + per_page

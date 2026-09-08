@@ -24,8 +24,8 @@ async def create_user(payload: UserCreate, admin: dict = Depends(require_admin))
     email = payload.email.lower().strip()
     if await db.users.find_one({"email": email}):
         raise HTTPException(status_code=400, detail="Email already registered")
-    if len(payload.password) < 6:
-        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    if len(payload.password) < 12:
+        raise HTTPException(status_code=400, detail="Password must be at least 12 characters")
     doc = {
         "id": new_id(),
         "name": payload.name,
@@ -62,8 +62,8 @@ async def update_user(uid: str, payload: UserUpdate, admin: dict = Depends(requi
     if payload.role is not None:
         updates["role"] = payload.role
     if payload.password:
-        if len(payload.password) < 6:
-            raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+        if len(payload.password) < 12:
+            raise HTTPException(status_code=400, detail="Password must be at least 12 characters")
         updates["password_hash"] = hash_password(payload.password)
     if not updates:
         raise HTTPException(status_code=400, detail="No fields to update")

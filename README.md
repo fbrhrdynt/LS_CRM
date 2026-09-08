@@ -5,7 +5,7 @@ By:       febroherdyanto98@gmail.com
 Build:    included
 
 ## Contents
-- `backend/`         — FastAPI Python source + `.env` (rotate secrets before production!)
+- `backend/`         — FastAPI Python source; keep production `.env` outside Git/backups
 - `frontend/`        — React app source (run `yarn install` to restore node_modules)
 - `frontend/build/`  — Pre-built static bundle ready for static hosting
 - `database/`        — MongoDB dump (BSON via mongodump, or JSON fallback if mongodump unavailable)
@@ -61,9 +61,8 @@ server {
 ```
 
 ## Security reminder
-`backend/.env` contains JWT_SECRET, VAULT_MASTER_KEY, ADMIN_PASSWORD in cleartext.
-ROTATE these before deploying to a public host.
+Never commit or bundle `backend/.env`. Keep `JWT_SECRET`, `VAULT_MASTER_KEY`,
+database credentials, and user passwords outside source control.
 
-## Seed credentials
-- Admin: admin@logisource.com / Admin@12345
-- Staff: staff@logisource.com / Staff@12345
+Before production, create `backend/.env` from `.env.example`, generate fresh
+high-entropy secrets, and rotate any credentials that have previously been shared.

@@ -1,26 +1,16 @@
 import axios from "axios";
 
-const BASE = process.env.REACT_APP_BACKEND_URL;
+const BASE = process.env.REACT_APP_BACKEND_URL || "";
 export const API = `${BASE}/api`;
 
-export const TOKEN_KEY = "logisource_token";
-
-export function getToken() {
-  return localStorage.getItem(TOKEN_KEY);
-}
-
-export function setToken(token) {
-  if (token) localStorage.setItem(TOKEN_KEY, token);
-  else localStorage.removeItem(TOKEN_KEY);
-}
-
-const api = axios.create({ baseURL: API, withCredentials: true });
-
-api.interceptors.request.use((config) => {
-  const t = getToken();
-  if (t) config.headers.Authorization = `Bearer ${t}`;
-  return config;
+const api = axios.create({
+  baseURL: API,
+  withCredentials: true,
 });
+
+if (typeof window !== "undefined") {
+  window.localStorage.removeItem("logisource_token");
+}
 
 api.interceptors.response.use(
   (r) => r,
@@ -29,7 +19,6 @@ api.interceptors.response.use(
     if (status === 401 && typeof window !== "undefined") {
       const path = window.location.pathname;
       if (!path.startsWith("/login")) {
-        setToken(null);
         window.location.href = "/login";
       }
     }

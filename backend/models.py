@@ -13,14 +13,14 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    password: str
+    password: str = Field(min_length=12, max_length=128)
 
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
     email: Optional[EmailStr] = None
     role: Optional[Literal["admin", "staff"]] = None
-    password: Optional[str] = None
+    password: Optional[str] = Field(default=None, min_length=12, max_length=128)
 
 
 class UserOut(UserBase):
@@ -38,7 +38,7 @@ class LoginIn(BaseModel):
 
 class ChangePasswordIn(BaseModel):
     old_password: str
-    new_password: str
+    new_password: str = Field(min_length=12, max_length=128)
 
 
 # ---------- CUSTOMERS ----------
@@ -76,13 +76,13 @@ class ProductBase(BaseModel):
     brand: Optional[str] = ""
     description: Optional[str] = ""
     unit: Optional[str] = "pcs"
-    selling_price: float = 0
-    purchase_price: float = 0
-    tax_percent: float = 0
+    selling_price: float = Field(default=0, ge=0)
+    purchase_price: float = Field(default=0, ge=0)
+    tax_percent: float = Field(default=0, ge=0, le=100)
     status: Literal["active", "inactive"] = "active"
     # Goods specific
     sku: Optional[str] = ""
-    stock: Optional[int] = 0
+    stock: Optional[int] = Field(default=0, ge=0)
     warranty: Optional[str] = ""
     # Service specific
     sla: Optional[str] = ""
@@ -124,10 +124,10 @@ class LineItem(BaseModel):
     product_id: Optional[str] = ""
     product_name: str
     description: Optional[str] = ""
-    quantity: float = 1
-    unit_price: float = 0
-    discount_percent: float = 0
-    tax_percent: float = 0
+    quantity: float = Field(default=1, gt=0)
+    unit_price: float = Field(default=0, ge=0)
+    discount_percent: float = Field(default=0, ge=0, le=100)
+    tax_percent: float = Field(default=0, ge=0, le=100)
 
     @property
     def line_total(self) -> float:
@@ -178,7 +178,7 @@ class InvoiceBase(BaseModel):
 
 class InvoiceCreate(InvoiceBase):
     status: Literal["draft", "unpaid", "partial", "paid", "cancelled"] = "unpaid"
-    paid_amount: float = 0
+    paid_amount: float = Field(default=0, ge=0)
 
 
 class InvoiceUpdate(BaseModel):
@@ -191,7 +191,7 @@ class InvoiceUpdate(BaseModel):
     notes: Optional[str] = None
     payment_terms: Optional[str] = None
     status: Optional[Literal["draft", "unpaid", "partial", "paid", "cancelled"]] = None
-    paid_amount: Optional[float] = None
+    paid_amount: Optional[float] = Field(default=None, ge=0)
 
 
 # ---------- PROJECTS ----------
