@@ -2,12 +2,12 @@ from datetime import datetime, timezone, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from auth import get_current_user, require_admin
+from auth import get_current_user, require_admin, require_permission
 from db import get_db
 from models import LicenseCreate, LicenseUpdate
 from utils import log_activity, new_id, paginate, utc_now_iso
 
-router = APIRouter(prefix="/api/licenses", tags=["licenses"])
+router = APIRouter(prefix="/api/licenses", tags=["licenses"], dependencies=[Depends(require_permission("licenses"))])
 
 
 def _days_left(iso_date: str) -> int | None:

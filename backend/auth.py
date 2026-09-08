@@ -1,4 +1,4 @@
-"""JWT + bcrypt authentication utilities."""
+"""JWT + bcrypt authentication and authorization utilities."""
 import os
 import uuid
 from datetime import datetime, timezone, timedelta
@@ -10,8 +10,19 @@ from fastapi import Depends, HTTPException, Request, status
 
 from db import get_db
 
+PERMISSION_ORDER = [
+    "customers", "products", "quotations", "invoices", "projects",
+    "accounts", "licenses", "logi_license", "activity_logs",
+]
+
+DEFAULT_STAFF_PERMISSIONS = [
+    "customers", "products", "quotations", "invoices", "projects", "licenses",
+]
+
+
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
 
 def verify_password(plain: str, hashed: str) -> bool:
     try:
@@ -19,19 +30,44 @@ def verify_password(plain: str, hashed: str) -> bool:
     except Exception:
         return False
 
+
+def normalize_user_permissions(user: dict) -> list[str]:
+    if user.get("role") == "admin":
+        return list(PERMISSION_ORDER)
+    raw = user.get("permissions")
+    if raw is None:
+        raw = DEFAULT_STAFF_PERMISSIONS
+    allowed = set(raw if isinstance(raw, list) else [])
+    return [p for p in PERMISSION_ORDER if p in allowed]
+
+
+def validate_permissions(values: list[str] | None) -> list[str]:
+    values = values or []
+    unknown = sorted(set(values) - set(PERMISSION_ORDER))
+    if unknown:
+        raise HTTPException(status_code=400, detail=f"Unknown permissions: {', '.join(unknown)}")
+    selected = set(values)
+    return [p for p in PERMISSION_ORDER if p in selected]
+
+
 def create_access_token(user_id: str, email: str, role: str, remember: bool = False) -> str:
     access_minutes = int(os.environ.get("JWT_ACCESS_MINUTES", "60"))
     remember_days = int(os.environ.get("JWT_REMEMBER_DAYS", "7"))
     ttl = timedelta(days=remember_days) if remember else timedelta(minutes=access_minutes)
     now = datetime.now(timezone.utc)
-    payload = {"sub": user_id, "email": email, "role": role, "jti": str(uuid.uuid4()), "exp": now + ttl, "iat": now, "type": "access"}
+    payload = {
+        "sub": user_id, "email": email, "role": role, "jti": str(uuid.uuid4()),
+        "exp": now + ttl, "iat": now, "type": "access",
+    }
     return jwt.encode(payload, os.environ["JWT_SECRET"], algorithm=os.environ.get("JWT_ALGORITHM", "HS256"))
+
 
 def decode_token(token: str) -> dict:
     payload = jwt.decode(token, os.environ["JWT_SECRET"], algorithms=[os.environ.get("JWT_ALGORITHM", "HS256")])
     if payload.get("type") != "access" or not payload.get("sub") or not payload.get("jti"):
         raise jwt.InvalidTokenError("Invalid access token")
     return payload
+
 
 def _extract_token(request: Request) -> Optional[str]:
     cookie_token = request.cookies.get("access_token")
@@ -41,6 +77,7 @@ def _extract_token(request: Request) -> Optional[str]:
     if auth.startswith("Bearer "):
         return auth[7:]
     return None
+
 
 async def get_current_user(request: Request) -> dict:
     token = _extract_token(request)
@@ -59,10 +96,24 @@ async def get_current_user(request: Request) -> dict:
     user = await db.users.find_one({"id": payload["sub"]}, {"_id": 0, "password_hash": 0})
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
+    user["permissions"] = normalize_user_permissions(user)
     request.state.session_jti = payload["jti"]
     return user
+
 
 async def require_admin(user: dict = Depends(get_current_user)) -> dict:
     if user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Administrator access required")
     return user
+
+
+def require_permission(permission: str):
+    if permission not in PERMISSION_ORDER:
+        raise RuntimeError(f"Unknown permission: {permission}")
+    async def _require(user: dict = Depends(get_current_user)) -> dict:
+        if user.get("role") == "admin":
+            return user
+        if permission not in normalize_user_permissions(user):
+            raise HTTPException(status_code=403, detail="Access not permitted")
+        return user
+    return _require

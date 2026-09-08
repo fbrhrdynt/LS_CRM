@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from auth import get_current_user, require_admin
+from auth import get_current_user, require_admin, require_permission
 from db import get_db
 from models import ProjectCreate, ProjectUpdate
 from utils import log_activity, new_id, next_number, paginate, utc_now_iso
 
-router = APIRouter(prefix="/api/projects", tags=["projects"])
+router = APIRouter(prefix="/api/projects", tags=["projects"], dependencies=[Depends(require_permission("projects"))])
 
 
 @router.get("")

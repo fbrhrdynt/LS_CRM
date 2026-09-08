@@ -4,13 +4,13 @@ import string
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from auth import get_current_user, require_admin
+from auth import get_current_user, require_admin, require_permission
 from db import get_db
 from models import AccountCreate, AccountUpdate
 from security import decrypt_secret, encrypt_secret
 from utils import log_activity, new_id, paginate, utc_now_iso
 
-router = APIRouter(prefix="/api/accounts", tags=["accounts"], dependencies=[Depends(require_admin)])
+router = APIRouter(prefix="/api/accounts", tags=["accounts"], dependencies=[Depends(require_permission("accounts"))])
 
 SECRET_FIELDS = ("password", "api_key", "secret_key")
 

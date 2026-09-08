@@ -14,17 +14,23 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str = Field(min_length=12, max_length=128)
+    permissions: List[str] = Field(default_factory=list)
 
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
     email: Optional[EmailStr] = None
     role: Optional[Literal["admin", "staff"]] = None
-    password: Optional[str] = Field(default=None, min_length=12, max_length=128)
+    permissions: Optional[List[str]] = None
+
+
+class ResetPasswordIn(BaseModel):
+    new_password: str = Field(min_length=12, max_length=128)
 
 
 class UserOut(UserBase):
     id: str
+    permissions: List[str] = Field(default_factory=list)
     created_at: str
     updated_at: str
 

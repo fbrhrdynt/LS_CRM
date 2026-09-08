@@ -1,16 +1,13 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
-export default function ProtectedRoute({ children, adminOnly = false }) {
+export default function ProtectedRoute({ children, adminOnly = false, permission = null }) {
   const { user, loading } = useAuth();
-  if (loading) {
-    return (
-      <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">
-        Loading…
-      </div>
-    );
-  }
+  if (loading) return <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">Loading…</div>;
   if (!user) return <Navigate to="/login" replace />;
   if (adminOnly && user.role !== "admin") return <Navigate to="/" replace />;
+  if (permission && user.role !== "admin" && !(user.permissions || []).includes(permission)) {
+    return <Navigate to="/" replace />;
+  }
   return children;
 }

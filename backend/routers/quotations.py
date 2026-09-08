@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Response
 
-from auth import get_current_user, require_admin
+from auth import get_current_user, require_admin, require_permission
 from db import get_db
 from models import QuotationCreate, QuotationUpdate
 from pdf_service import build_document_pdf
 from utils import log_activity, new_id, next_number, paginate, utc_now_iso
 
-router = APIRouter(prefix="/api/quotations", tags=["quotations"])
+router = APIRouter(prefix="/api/quotations", tags=["quotations"], dependencies=[Depends(require_permission("quotations"))])
 
 
 def _compute_totals(items):

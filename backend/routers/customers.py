@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Response
 
-from auth import get_current_user, require_admin
+from auth import get_current_user, require_admin, require_permission
 from db import get_db
 from excel_service import rows_to_xlsx, xlsx_to_dicts
 from models import CustomerCreate, CustomerUpdate
 from utils import log_activity, new_id, next_customer_code, paginate, utc_now_iso
 
-router = APIRouter(prefix="/api/customers", tags=["customers"])
+router = APIRouter(prefix="/api/customers", tags=["customers"], dependencies=[Depends(require_permission("customers"))])
 
 
 @router.get("")

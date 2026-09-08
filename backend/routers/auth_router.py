@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
-from auth import create_access_token, decode_token, get_current_user, hash_password, verify_password
+from auth import create_access_token, decode_token, get_current_user, hash_password, normalize_user_permissions, verify_password
 from db import get_db
 from models import ChangePasswordIn, LoginIn
 from security_controls import clear_login_failures, client_ip, ensure_login_allowed, record_login_failure
@@ -50,6 +50,7 @@ async def login(payload: LoginIn, response: Response, request: Request):
         max_age=remember_days * 24 * 60 * 60 if payload.remember else None, path="/",
     )
     user.pop("password_hash", None)
+    user["permissions"] = normalize_user_permissions(user)
     await log_activity(user, "login", "auth", f"User {user['email']} logged in")
     return {"access_token": token, "token_type": "bearer", "user": user}
 
