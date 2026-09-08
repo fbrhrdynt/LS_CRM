@@ -52,3 +52,4 @@ memory/
 .idea/
 .DS_Store
 Thumbs.db
+.security-v2-backup-*

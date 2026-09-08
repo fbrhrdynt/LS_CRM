@@ -48,6 +48,10 @@ async def init_db():
     now = datetime.now(timezone.utc).isoformat()
     admin = await db.users.find_one({"email": admin_email})
     if not admin:
+        # Production may already have an administrator whose email differs
+        # from the original seed email. Do not require/reseed credentials.
+        admin = await db.users.find_one({"role": "admin"})
+    if not admin:
         admin_password = os.environ.get("ADMIN_PASSWORD", "")
         if len(admin_password) < 12:
             raise RuntimeError("ADMIN_PASSWORD must be at least 12 characters when seeding admin")
@@ -64,6 +68,9 @@ async def init_db():
     # Seed staff
     staff_email = os.environ["STAFF_EMAIL"].lower()
     staff = await db.users.find_one({"email": staff_email})
+    if not staff:
+        # Same rule for an existing staff account.
+        staff = await db.users.find_one({"role": "staff"})
     if not staff:
         staff_password = os.environ.get("STAFF_PASSWORD", "")
         if len(staff_password) < 12:
