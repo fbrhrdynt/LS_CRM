@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Download, Upload, Save, Package, BookOpen } from "lucide-react";
-import api, { API, formatApiError, getToken } from "@/lib/api";
+import api, { API, formatApiError } from "@/lib/api";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,8 +58,9 @@ export default function Settings() {
     const fd = new FormData(); fd.append("file", file);
     try {
       const res = await fetch(`${API}/settings/restore`, {
-        method: "POST", body: fd,
-        headers: { Authorization: `Bearer ${getToken()}` }, credentials: "include",
+        method: "POST",
+        body: fd,
+        credentials: "include",
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Restore failed");
@@ -163,8 +164,8 @@ export default function Settings() {
             <div className="flex-1">
               <div className="font-medium mb-1">Download full source + database (ZIP)</div>
               <div className="text-sm text-muted-foreground">
-                Bundles backend, frontend (no <code>node_modules</code>), MongoDB dump, PRD, and credentials into a single archive.
-                Include <code>backend/.env</code> — rotate secrets before public deploy.
+                Bundles backend, frontend (no <code>node_modules</code>), MongoDB dump, and non-secret project files.
+                Secret <code>backend/.env</code> and credential files are intentionally excluded.
               </div>
               <label className="mt-3 flex items-center gap-2 text-sm cursor-pointer select-none">
                 <input

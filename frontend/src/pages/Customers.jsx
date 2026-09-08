@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Search, Pencil, Trash2, Download, Upload, Users as UsersIcon } from "lucide-react";
-import api, { API, formatApiError, getToken } from "@/lib/api";
+import api, { API, formatApiError } from "@/lib/api";
 import PageHeader from "@/components/PageHeader";
 import EmptyState from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
@@ -124,7 +124,6 @@ export default function Customers() {
       const res = await fetch(`${API}/customers/import/xlsx`, {
         method: "POST",
         body: fd,
-        headers: { Authorization: `Bearer ${getToken()}` },
         credentials: "include",
       });
       const data = await res.json();
