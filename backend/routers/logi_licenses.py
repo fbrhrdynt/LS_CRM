@@ -17,7 +17,7 @@ from db import get_db
 from logilicense_tutorial_pdf import build_logilicense_tutorial_pdf
 from utils import log_activity, new_id, paginate, utc_now_iso
 
-router = APIRouter(prefix="/api/logi-licenses", tags=["logi-licenses"])
+router = APIRouter(prefix="/api/logi-licenses", tags=["logi-licenses"], dependencies=[Depends(require_admin)])
 
 
 # ---------- Models ----------

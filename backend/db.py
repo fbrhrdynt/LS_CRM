@@ -37,13 +37,20 @@ async def init_db():
     await db.logi_licenses.create_index("license_key", unique=True)
     await db.logi_activations.create_index([("license_id", 1), ("fingerprint", 1)], unique=True)
     await db.logi_checks.create_index([("license_id", 1), ("timestamp", -1)])
+    await db.auth_sessions.create_index("jti", unique=True)
+    await db.auth_sessions.create_index("user_id")
+    await db.auth_sessions.create_index("expires_at", expireAfterSeconds=0)
+    await db.rate_limits.create_index("key", unique=True)
+    await db.rate_limits.create_index("expires_at", expireAfterSeconds=0)
 
     # Seed admin
     admin_email = os.environ["ADMIN_EMAIL"].lower()
-    admin_password = os.environ["ADMIN_PASSWORD"]
     now = datetime.now(timezone.utc).isoformat()
     admin = await db.users.find_one({"email": admin_email})
     if not admin:
+        admin_password = os.environ.get("ADMIN_PASSWORD", "")
+        if len(admin_password) < 12:
+            raise RuntimeError("ADMIN_PASSWORD must be at least 12 characters when seeding admin")
         await db.users.insert_one({
             "id": "user-admin-seed",
             "name": "Administrator",
@@ -56,9 +63,11 @@ async def init_db():
 
     # Seed staff
     staff_email = os.environ["STAFF_EMAIL"].lower()
-    staff_password = os.environ["STAFF_PASSWORD"]
     staff = await db.users.find_one({"email": staff_email})
     if not staff:
+        staff_password = os.environ.get("STAFF_PASSWORD", "")
+        if len(staff_password) < 12:
+            raise RuntimeError("STAFF_PASSWORD must be at least 12 characters when seeding staff")
         await db.users.insert_one({
             "id": "user-staff-seed",
             "name": "Staff User",

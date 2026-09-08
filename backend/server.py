@@ -8,8 +8,10 @@ import os
 
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from db import close_db, get_db, init_db
+from security_controls import security_middleware
 from routers.accounts import router as accounts_router
 from routers.activity_logs import router as activity_router
 from routers.auth_router import router as auth_router
@@ -30,6 +32,12 @@ logger = logging.getLogger("logisource")
 
 app = FastAPI(title="LogiSource Integrated System")
 
+allowed_hosts = [h.strip() for h in os.environ.get(
+    "ALLOWED_HOSTS",
+    "crm.logisourcedigital.web.id,127.0.0.1,localhost",
+).split(",") if h.strip()]
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
+
 # CORS
 origins_env = os.environ.get(
     "CORS_ORIGINS",
@@ -44,6 +52,8 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["Content-Disposition"],
 )
+
+app.middleware("http")(security_middleware)
 
 
 @app.on_event("startup")

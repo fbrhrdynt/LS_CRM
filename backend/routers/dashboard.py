@@ -71,16 +71,17 @@ async def summary(user: dict = Depends(get_current_user)):
             if dl <= 7:
                 alerts_license_7.append(item)
 
-    # Account expiring (registrations / subscriptions)
-    accounts = await db.accounts.find({}, {"_id": 0}).to_list(10000)
+    # Credential-vault metadata is administrator-only.
     alerts_registration = []
-    for a in accounts:
-        dl = _days_left(a.get("expiry_date", ""))
-        if dl is not None and 0 <= dl <= 30:
-            alerts_registration.append({
-                "id": a["id"], "name": a.get("name"), "category": a.get("category"),
-                "days_left": dl, "expiry_date": a.get("expiry_date")
-            })
+    if user.get("role") == "admin":
+        accounts = await db.accounts.find({}, {"_id": 0}).to_list(10000)
+        for a in accounts:
+            dl = _days_left(a.get("expiry_date", ""))
+            if dl is not None and 0 <= dl <= 30:
+                alerts_registration.append({
+                    "id": a["id"], "name": a.get("name"), "category": a.get("category"),
+                    "days_left": dl, "expiry_date": a.get("expiry_date")
+                })
 
     # Unpaid invoices
     unpaid = await db.invoices.find({"status": {"$in": ["unpaid", "partial"]}}, {"_id": 0}).sort("due_date", 1).to_list(50)
@@ -113,8 +114,10 @@ async def summary(user: dict = Depends(get_current_user)):
         "monthly_customers": bucket(custs),
     }
 
-    # Recent activity
-    recent = await db.activity_logs.find({}, {"_id": 0}).sort("timestamp", -1).to_list(10)
+    # Audit trail is administrator-only.
+    recent = []
+    if user.get("role") == "admin":
+        recent = await db.activity_logs.find({}, {"_id": 0}).sort("timestamp", -1).to_list(10)
 
     return {
         "counts": counts,
