@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, UploadFile, File
 
-from auth import get_current_user, require_admin
+from auth import get_current_user, require_admin, require_permission
 from db import get_db
 from excel_service import rows_to_xlsx, xlsx_to_dicts
 from models import CategoryIn, ProductCreate, ProductUpdate
 from pdf_service import build_product_catalog_pdf
 from utils import log_activity, new_id, next_product_code, paginate, utc_now_iso
 
-router = APIRouter(prefix="/api/products", tags=["products"])
+router = APIRouter(prefix="/api/products", tags=["products"], dependencies=[Depends(require_permission("products"))])
 
 
 # Categories

@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends
 
-from auth import get_current_user, require_admin
+from auth import get_current_user, require_admin, require_permission
 from db import get_db
 from utils import paginate
 
-router = APIRouter(prefix="/api/activity-logs", tags=["activity"], dependencies=[Depends(require_admin)])
+router = APIRouter(prefix="/api/activity-logs", tags=["activity"], dependencies=[Depends(require_permission("activity_logs"))])
 
 
 @router.get("")

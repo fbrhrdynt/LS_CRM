@@ -54,25 +54,25 @@ const NAV_SECTIONS = [
   {
     label: "Sales",
     items: [
-      { to: "/customers", icon: Users, label: "Customers" },
-      { to: "/products", icon: Package, label: "Products" },
-      { to: "/quotations", icon: FileText, label: "Quotations" },
-      { to: "/invoices", icon: Receipt, label: "Invoices" },
+      { to: "/customers", icon: Users, label: "Customers", permission: "customers" },
+      { to: "/products", icon: Package, label: "Products", permission: "products" },
+      { to: "/quotations", icon: FileText, label: "Quotations", permission: "quotations" },
+      { to: "/invoices", icon: Receipt, label: "Invoices", permission: "invoices" },
     ],
   },
   {
     label: "Operations",
     items: [
-      { to: "/projects", icon: FolderKanban, label: "Projects" },
-      { to: "/accounts", icon: KeyRound, label: "Credential Vault", adminOnly: true },
-      { to: "/licenses", icon: BadgeCheck, label: "Licenses" },
-      { to: "/logi-license", icon: Zap, label: "LogiLicense", adminOnly: true },
+      { to: "/projects", icon: FolderKanban, label: "Projects", permission: "projects" },
+      { to: "/accounts", icon: KeyRound, label: "Credential Vault", permission: "accounts" },
+      { to: "/licenses", icon: BadgeCheck, label: "Licenses", permission: "licenses" },
+      { to: "/logi-license", icon: Zap, label: "LogiLicense", permission: "logi_license" },
     ],
   },
   {
     label: "Admin",
     items: [
-      { to: "/activity-logs", icon: History, label: "Activity Logs", adminOnly: true },
+      { to: "/activity-logs", icon: History, label: "Activity Logs", permission: "activity_logs" },
       { to: "/users", icon: UserCog, label: "User Management", adminOnly: true },
       { to: "/settings", icon: Settings, label: "Website Settings", adminOnly: true },
     ],
@@ -83,7 +83,11 @@ function SidebarNav({ user, onNavigate }) {
   return (
     <nav className="flex flex-col gap-6 px-3 pb-6" data-testid={LAYOUT.sidebar}>
       {NAV_SECTIONS.map((section) => {
-        const items = section.items.filter((i) => !i.adminOnly || user?.role === "admin");
+        const items = section.items.filter((i) => {
+          if (i.adminOnly) return user?.role === "admin";
+          if (!i.permission || user?.role === "admin") return true;
+          return (user?.permissions || []).includes(i.permission);
+        });
         if (items.length === 0) return null;
         return (
           <div key={section.label}>
