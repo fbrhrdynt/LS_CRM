@@ -124,11 +124,21 @@ async def verify(payload: VerifyIn, request: Request):
         await _record_check(lic["id"], payload.license_key, payload.fingerprint or "", request, "expired", "Past expiry date")
         return {"valid": False, "reason": "expired", "message": "License has expired.", "plan": "trial", "expiry_date": lic.get("expiry_date")}
 
-    # Update last_seen for this fingerprint if it's activated
     if payload.fingerprint:
         db = get_db()
-        await db.logi_activations.update_one(
+        activation = await db.logi_activations.find_one(
             {"license_id": lic["id"], "fingerprint": payload.fingerprint},
+            {"_id": 0, "id": 1},
+        )
+        if not activation:
+            await _record_check(
+                lic["id"], payload.license_key, payload.fingerprint,
+                request, "activation_required", "Fingerprint is not activated",
+            )
+            return {"valid": False, "reason": "activation_required",
+                    "message": "This device is not activated.", "plan": "trial"}
+        await db.logi_activations.update_one(
+            {"id": activation["id"]},
             {"$set": {"last_seen_at": utc_now_iso(), "last_ip": _client_ip(request)}},
         )
 
@@ -170,30 +180,41 @@ async def activate(payload: ActivateIn, request: Request):
         await _record_check(lic["id"], payload.license_key, payload.fingerprint, request, "valid", "Re-activated")
         return {"activated": True, "already_activated": True, **_license_public_view(lic)}
 
-    # Check activation limit
-    current = int(lic.get("activation_count", 0))
     limit = int(lic.get("max_activations", 1))
-    if limit > 0 and current >= limit:
-        await _record_check(lic["id"], payload.license_key, payload.fingerprint, request, "limit_reached", "Activation limit reached")
-        return {"activated": False, "reason": "limit_reached", "message": f"Activation limit ({limit}) reached.", "plan": "trial"}
+    reserve_query = {"id": lic["id"], "status": "active"}
+    if limit > 0:
+        reserve_query["activation_count"] = {"$lt": limit}
 
-    # Create activation
-    await db.logi_activations.insert_one({
-        "id": new_id(),
-        "license_id": lic["id"],
-        "fingerprint": payload.fingerprint,
-        "hostname": payload.hostname or "",
-        "ip": _client_ip(request),
-        "user_agent": request.headers.get("user-agent", "")[:200],
-        "activated_at": utc_now_iso(),
-        "last_seen_at": utc_now_iso(),
-        "last_ip": _client_ip(request),
-    })
-    await db.logi_licenses.update_one(
-        {"id": lic["id"]},
-        {"$set": {"activation_count": current + 1, "updated_at": utc_now_iso()}},
+    reserved = await db.logi_licenses.find_one_and_update(
+        reserve_query,
+        {"$inc": {"activation_count": 1}, "$set": {"updated_at": utc_now_iso()}},
+        return_document=True,
     )
-    lic["activation_count"] = current + 1
+    if not reserved:
+        await _record_check(lic["id"], payload.license_key, payload.fingerprint,
+                            request, "limit_reached", "Activation limit reached")
+        return {"activated": False, "reason": "limit_reached",
+                "message": f"Activation limit ({limit}) reached.", "plan": "trial"}
+
+    try:
+        await db.logi_activations.insert_one({
+            "id": new_id(),
+            "license_id": lic["id"],
+            "fingerprint": payload.fingerprint,
+            "hostname": payload.hostname or "",
+            "ip": _client_ip(request),
+            "user_agent": request.headers.get("user-agent", "")[:200],
+            "activated_at": utc_now_iso(),
+            "last_seen_at": utc_now_iso(),
+            "last_ip": _client_ip(request),
+        })
+    except Exception:
+        await db.logi_licenses.update_one(
+            {"id": lic["id"], "activation_count": {"$gt": 0}},
+            {"$inc": {"activation_count": -1}, "$set": {"updated_at": utc_now_iso()}},
+        )
+        raise
+    lic["activation_count"] = int(reserved.get("activation_count", 1))
     await _record_check(lic["id"], payload.license_key, payload.fingerprint, request, "valid", "Activated")
     return {"activated": True, "already_activated": False, **_license_public_view(lic)}
 
@@ -208,10 +229,9 @@ async def deactivate(payload: HeartbeatIn, request: Request):
         {"license_id": lic["id"], "fingerprint": payload.fingerprint}
     )
     if r.deleted_count:
-        current = int(lic.get("activation_count", 0))
         await db.logi_licenses.update_one(
-            {"id": lic["id"]},
-            {"$set": {"activation_count": max(0, current - 1), "updated_at": utc_now_iso()}},
+            {"id": lic["id"], "activation_count": {"$gt": 0}},
+            {"$inc": {"activation_count": -1}, "$set": {"updated_at": utc_now_iso()}},
         )
     await _record_check(lic["id"], payload.license_key, payload.fingerprint, request, "deactivated", "Client deactivated")
     return {"deactivated": bool(r.deleted_count)}
@@ -222,9 +242,16 @@ async def heartbeat(payload: HeartbeatIn, request: Request):
     lic, err = await _resolve(payload.license_key)
     if err or not lic:
         return {"ok": False, "reason": err or "not_found"}
+    if lic.get("status") != "active":
+        return {"ok": False, "reason": lic.get("status") or "inactive"}
+    dl = _days_left(lic.get("expiry_date", ""))
+    if dl is not None and dl < 0:
+        return {"ok": False, "reason": "expired"}
     db = get_db()
-    await db.logi_activations.update_one(
+    result = await db.logi_activations.update_one(
         {"license_id": lic["id"], "fingerprint": payload.fingerprint},
         {"$set": {"last_seen_at": utc_now_iso(), "last_ip": _client_ip(request)}},
     )
+    if result.matched_count == 0:
+        return {"ok": False, "reason": "not_activated"}
     return {"ok": True, "at": utc_now_iso()}

@@ -17,6 +17,21 @@ from utils import log_activity, utc_now_iso
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
+BACKUP_COLLECTIONS = [
+    "users", "customers", "products", "product_categories", "quotations",
+    "invoices", "projects", "accounts", "licenses", "settings",
+    "activity_logs", "counters", "logi_licenses", "logi_activations", "logi_checks",
+]
+RESTORE_COLLECTIONS = set(BACKUP_COLLECTIONS) - {"users"}
+MAX_RESTORE_BYTES = 25 * 1024 * 1024
+
+# Resolve paths from this file instead of assuming the app lives under /app.
+# Works for /opt/logisource, local development, and other deployment paths.
+BACKEND_DIR = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = BACKEND_DIR.parent
+FRONTEND_DIR = PROJECT_ROOT / "frontend"
+MEMORY_DIR = PROJECT_ROOT / "memory"
+
 
 @router.get("/installation-guide/pdf")
 async def installation_guide_pdf(user: dict = Depends(get_current_user)):
@@ -56,11 +71,8 @@ async def update_settings(payload: SettingsUpdate, admin: dict = Depends(require
 async def backup(admin: dict = Depends(require_admin)):
     """Export ALL collections as a single JSON file."""
     db = get_db()
-    collections = ["users", "customers", "products", "product_categories", "quotations",
-                   "invoices", "projects", "accounts", "licenses", "settings",
-                   "activity_logs", "counters"]
     out = {"exported_at": datetime.now(timezone.utc).isoformat(), "collections": {}}
-    for c in collections:
+    for c in BACKUP_COLLECTIONS:
         docs = await db[c].find({}, {"_id": 0}).to_list(100000)
         out["collections"][c] = docs
     content = json.dumps(out, indent=2, default=str).encode("utf-8")
@@ -74,18 +86,26 @@ async def backup(admin: dict = Depends(require_admin)):
 
 @router.post("/restore")
 async def restore(file: UploadFile = File(...), admin: dict = Depends(require_admin)):
-    content = await file.read()
+    content = await file.read(MAX_RESTORE_BYTES + 1)
+    if len(content) > MAX_RESTORE_BYTES:
+        raise HTTPException(status_code=413, detail="Backup file is too large (max 25 MB)")
     try:
         data = json.loads(content.decode("utf-8"))
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid backup file: {e}")
-    if "collections" not in data:
-        raise HTTPException(status_code=400, detail="Missing 'collections' in backup")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid backup JSON")
+    collections = data.get("collections")
+    if not isinstance(collections, dict):
+        raise HTTPException(status_code=400, detail="Missing or invalid 'collections' object")
+    unknown = set(collections) - set(BACKUP_COLLECTIONS)
+    if unknown:
+        raise HTTPException(status_code=400, detail=f"Unsupported collections: {', '.join(sorted(unknown))}")
+    for cname, docs in collections.items():
+        if not isinstance(docs, list) or any(not isinstance(doc, dict) for doc in docs):
+            raise HTTPException(status_code=400, detail=f"Invalid documents for collection '{cname}'")
     db = get_db()
     restored = {}
-    for cname, docs in data["collections"].items():
-        # never overwrite users collection wholesale to avoid losing admin
-        if cname == "users":
+    for cname, docs in collections.items():
+        if cname not in RESTORE_COLLECTIONS:
             continue
         await db[cname].delete_many({})
         if docs:
@@ -113,7 +133,7 @@ async def full_export(include_build: bool = False, admin: dict = Depends(require
             try:
                 subprocess.run(
                     ["yarn", "build"],
-                    cwd="/app/frontend",
+                    cwd=str(FRONTEND_DIR),
                     check=True, capture_output=True, timeout=240,
                     env={**os.environ, "CI": "false", "GENERATE_SOURCEMAP": "false"},
                 )
@@ -137,20 +157,15 @@ async def full_export(include_build: bool = False, admin: dict = Depends(require
         except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
             # Fallback: JSON dump using our own backup logic
             db = get_db()
-            collections = [
-                "users", "customers", "products", "product_categories", "quotations",
-                "invoices", "projects", "accounts", "licenses", "settings",
-                "activity_logs", "counters", "logi_licenses", "logi_activations", "logi_checks",
-            ]
             fallback = {"exported_at": utc_now_iso(), "collections": {}}
-            for c in collections:
+            for c in BACKUP_COLLECTIONS:
                 docs = await db[c].find({}, {"_id": 0}).to_list(200000)
                 fallback["collections"][c] = docs
             (dump_dir / f"{db_name}-fallback.json").write_text(json.dumps(fallback, indent=2, default=str))
 
         # 2. Copy source code, skipping heavy / secret artefacts
         skip_dirs = {"node_modules", "__pycache__", ".git", ".venv", "build", "dist", ".next", ".cache", ".pytest_cache", ".yarn"}
-        skip_files = {".DS_Store"}
+        skip_files = {".DS_Store", ".env", "test_credentials.md"}
 
         def _copy_tree(src: Path, dst: Path, prune_default: bool = True):
             if not src.exists():
@@ -171,10 +186,10 @@ async def full_export(include_build: bool = False, admin: dict = Depends(require
                     except Exception:
                         pass
 
-        _copy_tree(Path("/app/backend"), workdir / "backend")
-        _copy_tree(Path("/app/frontend"), workdir / "frontend")
-        _copy_tree(Path("/app/memory"), workdir / "memory")
-        _copy_tree(Path("/app/backend/tests"), workdir / "backend" / "tests")
+        _copy_tree(BACKEND_DIR, workdir / "backend")
+        _copy_tree(FRONTEND_DIR, workdir / "frontend")
+        _copy_tree(MEMORY_DIR, workdir / "memory")
+        _copy_tree(BACKEND_DIR / "tests", workdir / "backend" / "tests")
 
         # 2c. Always embed the Installation Guide PDF into the ZIP root
         try:
@@ -188,7 +203,7 @@ async def full_export(include_build: bool = False, admin: dict = Depends(require
         # 2b. Copy compiled build if requested (and it exists)
         build_size_kb = 0
         if include_build and not build_warning:
-            build_src = Path("/app/frontend/build")
+            build_src = FRONTEND_DIR / "build"
             if build_src.exists():
                 build_dst = workdir / "frontend" / "build"
                 _copy_tree(build_src, build_dst, prune_default=False)  # keep static/ etc.
@@ -250,11 +265,11 @@ By:       {admin.get("email")}
 Build:    {"included" if include_build and not build_warning else "not included"}
 
 ## Contents
-- `backend/`         — FastAPI Python source + `.env` (rotate secrets before production!)
+- `backend/`         — FastAPI Python source; secret `.env` is intentionally excluded
 - `frontend/`        — React app source (run `yarn install` to restore node_modules)
 {"- `frontend/build/`  — Pre-built static bundle ready for static hosting" if include_build and not build_warning else ""}
 - `database/`        — MongoDB dump (BSON via mongodump, or JSON fallback if mongodump unavailable)
-- `memory/`          — PRD.md, test_credentials.md
+- `memory/`          — non-secret project memory files
 
 ## Restore locally
 
@@ -282,12 +297,9 @@ mongorestore --uri "mongodb://localhost:27017" --db {db_name} database/{db_name}
 Otherwise use the JSON fallback via the app: log in as admin → Website Settings → Restore.
 {build_section}
 ## Security reminder
-`backend/.env` contains JWT_SECRET, VAULT_MASTER_KEY, ADMIN_PASSWORD in cleartext.
-ROTATE these before deploying to a public host.
-
-## Seed credentials
-- Admin: admin@logisource.com / Admin@12345
-- Staff: staff@logisource.com / Staff@12345
+The export intentionally excludes `.env` and credential files. Recreate
+`backend/.env` from `backend/.env.example` and supply fresh secrets separately.
+Never store `VAULT_MASTER_KEY` in the same archive as database backups.
 """
         (workdir / "README.md").write_text(readme)
 

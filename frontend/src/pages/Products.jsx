@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Search, Pencil, Trash2, Download, Upload, Package as PackageIcon, FileText } from "lucide-react";
-import api, { API, formatApiError, getToken } from "@/lib/api";
+import api, { API, formatApiError } from "@/lib/api";
 import PageHeader from "@/components/PageHeader";
 import EmptyState from "@/components/EmptyState";
 import StatusBadge from "@/components/StatusBadge";
@@ -124,8 +124,9 @@ export default function Products() {
     fd.append("file", file);
     try {
       const res = await fetch(`${API}/products/import/xlsx`, {
-        method: "POST", body: fd,
-        headers: { Authorization: `Bearer ${getToken()}` }, credentials: "include",
+        method: "POST",
+        body: fd,
+        credentials: "include",
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Import failed");

@@ -21,14 +21,17 @@ def verify_password(plain: str, hashed: str) -> bool:
         return False
 
 
-def create_access_token(user_id: str, email: str, role: str) -> str:
-    minutes = int(os.environ.get("JWT_ACCESS_MINUTES", "720"))
+def create_access_token(user_id: str, email: str, role: str, remember: bool = False) -> str:
+    access_minutes = int(os.environ.get("JWT_ACCESS_MINUTES", "60"))
+    remember_days = int(os.environ.get("JWT_REMEMBER_DAYS", "7"))
+    ttl = timedelta(days=remember_days) if remember else timedelta(minutes=access_minutes)
+    now = datetime.now(timezone.utc)
     payload = {
         "sub": user_id,
         "email": email,
         "role": role,
-        "exp": datetime.now(timezone.utc) + timedelta(minutes=minutes),
-        "iat": datetime.now(timezone.utc),
+        "exp": now + ttl,
+        "iat": now,
         "type": "access",
     }
     return jwt.encode(payload, os.environ["JWT_SECRET"], algorithm=os.environ.get("JWT_ALGORITHM", "HS256"))
@@ -39,10 +42,15 @@ def decode_token(token: str) -> dict:
 
 
 def _extract_token(request: Request) -> Optional[str]:
+    # Browser sessions prefer the HttpOnly cookie. Bearer remains supported
+    # for scripts/integrations so existing API clients keep working.
+    cookie_token = request.cookies.get("access_token")
+    if cookie_token:
+        return cookie_token
     auth = request.headers.get("Authorization", "")
     if auth.startswith("Bearer "):
         return auth[7:]
-    return request.cookies.get("access_token")
+    return None
 
 
 async def get_current_user(request: Request) -> dict:
