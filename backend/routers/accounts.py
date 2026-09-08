@@ -10,7 +10,7 @@ from models import AccountCreate, AccountUpdate
 from security import decrypt_secret, encrypt_secret
 from utils import log_activity, new_id, paginate, utc_now_iso
 
-router = APIRouter(prefix="/api/accounts", tags=["accounts"])
+router = APIRouter(prefix="/api/accounts", tags=["accounts"], dependencies=[Depends(require_admin)])
 
 SECRET_FIELDS = ("password", "api_key", "secret_key")
 

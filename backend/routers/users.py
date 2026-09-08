@@ -55,6 +55,7 @@ async def get_user(uid: str, admin: dict = Depends(require_admin)):
 async def update_user(uid: str, payload: UserUpdate, admin: dict = Depends(require_admin)):
     db = get_db()
     updates: dict = {}
+    password_changed = False
     if payload.name is not None:
         updates["name"] = payload.name
     if payload.email is not None:
@@ -65,12 +66,15 @@ async def update_user(uid: str, payload: UserUpdate, admin: dict = Depends(requi
         if len(payload.password) < 12:
             raise HTTPException(status_code=400, detail="Password must be at least 12 characters")
         updates["password_hash"] = hash_password(payload.password)
+        password_changed = True
     if not updates:
         raise HTTPException(status_code=400, detail="No fields to update")
     updates["updated_at"] = utc_now_iso()
     r = await db.users.update_one({"id": uid}, {"$set": updates})
     if r.matched_count == 0:
         raise HTTPException(status_code=404, detail="Not found")
+    if password_changed:
+        await db.auth_sessions.delete_many({"user_id": uid})
     doc = await db.users.find_one({"id": uid}, {"_id": 0, "password_hash": 0})
     await log_activity(admin, "update", "users", f"User {doc.get('email')}")
     return doc
@@ -85,5 +89,6 @@ async def delete_user(uid: str, admin: dict = Depends(require_admin)):
     if not doc:
         raise HTTPException(status_code=404, detail="Not found")
     await db.users.delete_one({"id": uid})
+    await db.auth_sessions.delete_many({"user_id": uid})
     await log_activity(admin, "delete", "users", f"User {doc.get('email')}")
     return {"message": "deleted"}

@@ -50,11 +50,39 @@ function App() {
               <Route path="invoices/new" element={<InvoiceEditor />} />
               <Route path="projects" element={<Projects />} />
               <Route path="projects/:id" element={<ProjectDetail />} />
-              <Route path="accounts" element={<Accounts />} />
+              <Route
+                path="accounts"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <Accounts />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="licenses" element={<Licenses />} />
-              <Route path="logi-license" element={<LogiLicense />} />
-              <Route path="logi-license/:id" element={<LogiLicenseDetail />} />
-              <Route path="activity-logs" element={<ActivityLogs />} />
+              <Route
+                path="logi-license"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <LogiLicense />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="logi-license/:id"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <LogiLicenseDetail />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="activity-logs"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <ActivityLogs />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="users"
                 element={

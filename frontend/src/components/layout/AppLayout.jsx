@@ -64,15 +64,15 @@ const NAV_SECTIONS = [
     label: "Operations",
     items: [
       { to: "/projects", icon: FolderKanban, label: "Projects" },
-      { to: "/accounts", icon: KeyRound, label: "Credential Vault" },
+      { to: "/accounts", icon: KeyRound, label: "Credential Vault", adminOnly: true },
       { to: "/licenses", icon: BadgeCheck, label: "Licenses" },
-      { to: "/logi-license", icon: Zap, label: "LogiLicense" },
+      { to: "/logi-license", icon: Zap, label: "LogiLicense", adminOnly: true },
     ],
   },
   {
     label: "Admin",
     items: [
-      { to: "/activity-logs", icon: History, label: "Activity Logs" },
+      { to: "/activity-logs", icon: History, label: "Activity Logs", adminOnly: true },
       { to: "/users", icon: UserCog, label: "User Management", adminOnly: true },
       { to: "/settings", icon: Settings, label: "Website Settings", adminOnly: true },
     ],
@@ -129,10 +129,11 @@ function ChangePasswordDialog({ open, onOpenChange }) {
     setBusy(true);
     try {
       await api.post("/auth/change-password", { old_password: oldp, new_password: newp });
-      toast.success("Password updated");
+      toast.success("Password updated. Please sign in again.");
       setOldp("");
       setNewp("");
       onOpenChange(false);
+      window.location.href = "/login";
     } catch (err) {
       toast.error(formatApiError(err));
     } finally {
@@ -164,7 +165,7 @@ function ChangePasswordDialog({ open, onOpenChange }) {
               value={newp}
               onChange={(e) => setNewp(e.target.value)}
               required
-              minLength={6}
+              minLength={12}
               data-testid="change-password-new-input"
             />
           </div>
