@@ -27,6 +27,7 @@ async def permission_catalog(admin: dict = Depends(require_admin)):
         "accounts": "Credential Vault",
         "licenses": "Licenses",
         "logi_license": "LogiLicense",
+        "amt_releases": "AMT Releases",
         "activity_logs": "Activity Logs",
     }
     return [{"key": p, "label": labels[p]} for p in PERMISSION_ORDER]

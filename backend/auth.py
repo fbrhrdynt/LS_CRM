@@ -12,7 +12,7 @@ from db import get_db
 
 PERMISSION_ORDER = [
     "customers", "products", "quotations", "invoices", "projects",
-    "accounts", "licenses", "logi_license", "activity_logs",
+    "accounts", "licenses", "logi_license", "amt_releases", "activity_logs",
 ]
 
 DEFAULT_STAFF_PERMISSIONS = [

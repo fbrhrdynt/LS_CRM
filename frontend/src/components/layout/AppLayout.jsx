@@ -10,6 +10,7 @@ import {
   KeyRound,
   BadgeCheck,
   Zap,
+  Rocket,
   History,
   UserCog,
   Settings,
@@ -67,6 +68,7 @@ const NAV_SECTIONS = [
       { to: "/accounts", icon: KeyRound, label: "Credential Vault", permission: "accounts" },
       { to: "/licenses", icon: BadgeCheck, label: "Licenses", permission: "licenses" },
       { to: "/logi-license", icon: Zap, label: "LogiLicense", permission: "logi_license" },
+      { to: "/amt-releases", icon: Rocket, label: "AMT Releases", permission: "amt_releases" },
     ],
   },
   {

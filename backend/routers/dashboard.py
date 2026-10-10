@@ -74,7 +74,7 @@ async def summary(user: dict = Depends(get_current_user)):
     # Credential-vault metadata is administrator-only.
     alerts_registration = []
     if user.get("role") == "admin":
-        accounts = await db.accounts.find({}, {"_id": 0}).to_list(10000)
+        accounts = await db.accounts.find({"$or": [{"visibility": {"$ne": "private"}}, {"created_by_user_id": user["id"]}]}, {"_id": 0}).to_list(10000)
         for a in accounts:
             dl = _days_left(a.get("expiry_date", ""))
             if dl is not None and 0 <= dl <= 30:

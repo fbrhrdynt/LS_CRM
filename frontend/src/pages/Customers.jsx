@@ -24,6 +24,8 @@ import { fmtDate } from "@/lib/format";
 const EMPTY = {
   code: "", company_name: "", pic_name: "", position: "", phone: "",
   email: "", address: "", website: "", notes: "",
+  payment_bank_name: "", payment_bank_account_name: "", payment_bank_account_number: "",
+  payment_bank_branch: "", payment_terms: "",
 };
 
 export default function Customers() {
@@ -262,6 +264,25 @@ export default function Customers() {
             </Field>
             <Field label="Address" span={2}>
               <Textarea value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} rows={2} />
+            </Field>
+            <div className="col-span-2 border-t border-border pt-3 mt-1">
+              <div className="label-eyebrow mb-1">Payment & Bank Transfer Details</div>
+              <p className="text-xs text-muted-foreground">Rekening LogiSource yang akan dicantumkan pada quotation, invoice, dan PDF untuk customer ini.</p>
+            </div>
+            <Field label="Receiving Bank">
+              <Input value={form.payment_bank_name || ""} onChange={(e) => setForm({ ...form, payment_bank_name: e.target.value })} placeholder="e.g. BCA" />
+            </Field>
+            <Field label="Account Holder">
+              <Input value={form.payment_bank_account_name || ""} onChange={(e) => setForm({ ...form, payment_bank_account_name: e.target.value })} placeholder="Account holder name" />
+            </Field>
+            <Field label="Account Number">
+              <Input value={form.payment_bank_account_number || ""} onChange={(e) => setForm({ ...form, payment_bank_account_number: e.target.value })} placeholder="Bank account number" />
+            </Field>
+            <Field label="Branch">
+              <Input value={form.payment_bank_branch || ""} onChange={(e) => setForm({ ...form, payment_bank_branch: e.target.value })} placeholder="Optional" />
+            </Field>
+            <Field label="Payment Terms / Transfer Instructions" span={2}>
+              <Textarea value={form.payment_terms || ""} onChange={(e) => setForm({ ...form, payment_terms: e.target.value })} rows={3} placeholder="e.g. 50% DP, transfer to the account above; remaining 50% upon delivery." />
             </Field>
             <Field label="Notes" span={2}>
               <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />

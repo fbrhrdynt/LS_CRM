@@ -14,6 +14,7 @@ from db import close_db, get_db, init_db
 from security_controls import security_middleware
 from routers.accounts import router as accounts_router
 from routers.activity_logs import router as activity_router
+from routers.amt_releases import router as amt_releases_router
 from routers.auth_router import router as auth_router
 from routers.customers import router as customers_router
 from routers.dashboard import router as dashboard_router
@@ -23,6 +24,7 @@ from routers.logi_licenses import router as logi_licenses_router
 from routers.products import router as products_router
 from routers.projects import router as projects_router
 from routers.public_license import router as public_license_router
+from routers.public_update import router as public_update_router
 from routers.quotations import router as quotations_router
 from routers.settings import router as settings_router
 from routers.users import router as users_router
@@ -87,7 +89,9 @@ for r in (
     accounts_router,
     licenses_router,
     logi_licenses_router,
+    amt_releases_router,
     public_license_router,
+    public_update_router,
     users_router,
     settings_router,
     activity_router,

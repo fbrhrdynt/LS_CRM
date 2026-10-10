@@ -44,6 +44,7 @@ export default function DocumentEditor({ kind }) {
   const navigate = useNavigate();
 
   const [customers, setCustomers] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [products, setProducts] = useState([]);
   const [settings, setSettings] = useState({});
   const [doc, setDoc] = useState(null);
@@ -51,6 +52,7 @@ export default function DocumentEditor({ kind }) {
 
   useEffect(() => {
     api.get("/customers/all").then((r) => setCustomers(r.data));
+    api.get("/projects/all").then((r) => setProjects(r.data));
     api.get("/products/all").then((r) => setProducts(r.data));
     api.get("/settings").then((r) => setSettings(r.data));
   }, []);
@@ -59,11 +61,16 @@ export default function DocumentEditor({ kind }) {
     if (isNew) {
       const defaults = {
         customer_id: "",
+        project_id: "",
         date: todayInput(),
         currency: "IDR",
         items: [emptyItem()],
         notes: "",
-        payment_terms: "50% down payment, 50% on delivery",
+        payment_terms: "",
+        payment_bank_name: "",
+        payment_bank_account_name: "",
+        payment_bank_account_number: "",
+        payment_bank_branch: "",
       };
       if (isQuotation) {
         defaults.valid_until = "";
@@ -86,6 +93,22 @@ export default function DocumentEditor({ kind }) {
   if (!doc) return <div className="text-sm text-muted-foreground">Loading…</div>;
 
   const setField = (k, v) => setDoc((d) => ({ ...d, [k]: v }));
+  const paymentSnapshot = (customer) => ({
+    payment_terms: customer?.payment_terms || "",
+    payment_bank_name: customer?.payment_bank_name || "",
+    payment_bank_account_name: customer?.payment_bank_account_name || "",
+    payment_bank_account_number: customer?.payment_bank_account_number || "",
+    payment_bank_branch: customer?.payment_bank_branch || "",
+  });
+  const selectCustomer = (customerId, projectId = "") => {
+    const customer = customers.find((c) => c.id === customerId);
+    setDoc((d) => ({ ...d, customer_id: customerId, project_id: projectId, ...paymentSnapshot(customer) }));
+  };
+  const selectProject = (projectId) => {
+    if (!projectId) return setField("project_id", "");
+    const project = projects.find((p) => p.id === projectId);
+    if (project) selectCustomer(project.customer_id, project.id);
+  };
   const setItem = (i, patch) => setDoc((d) => {
     const items = [...d.items];
     items[i] = { ...items[i], ...patch };
@@ -216,8 +239,17 @@ export default function DocumentEditor({ kind }) {
       {/* Header form */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
         <div className="space-y-1.5 md:col-span-2">
+          <Label className="text-xs uppercase tracking-widest">Project (optional)</Label>
+          <Select value={projects.some((p) => p.id === doc.project_id) ? doc.project_id : ""} onValueChange={selectProject}>
+            <SelectTrigger data-testid="doc-project-select"><SelectValue placeholder="Select project to fill customer" /></SelectTrigger>
+            <SelectContent>
+              {projects.map((p) => <SelectItem key={p.id} value={p.id}>{p.number ? `${p.number} — ` : ""}{p.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5 md:col-span-2">
           <Label className="text-xs uppercase tracking-widest">Customer *</Label>
-          <Select value={doc.customer_id || ""} onValueChange={(v) => setField("customer_id", v)}>
+          <Select value={doc.customer_id || ""} onValueChange={(v) => selectCustomer(v, "")}>
             <SelectTrigger data-testid="doc-customer-select"><SelectValue placeholder="Select customer" /></SelectTrigger>
             <SelectContent>
               {customers.map((c) => <SelectItem key={c.id} value={c.id}>{c.company_name} ({c.code})</SelectItem>)}
@@ -316,13 +348,27 @@ export default function DocumentEditor({ kind }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs uppercase tracking-widest">Payment Terms</Label>
-              <Input value={doc.payment_terms || ""} onChange={(e) => setField("payment_terms", e.target.value)} />
+              <Textarea rows={2} value={doc.payment_terms || ""} onChange={(e) => setField("payment_terms", e.target.value)} placeholder="Loaded from selected customer; editable for this document" />
             </div>
             {isQuotation && (
               <div className="space-y-1.5">
                 <Label className="text-xs uppercase tracking-widest">Delivery Time</Label>
                 <Input value={doc.delivery_time || ""} onChange={(e) => setField("delivery_time", e.target.value)} />
               </div>
+            )}
+          </div>
+          <div className="border border-border rounded-sm bg-muted/20 p-3 space-y-1">
+            <div className="label-eyebrow">Payment / Bank Transfer Details</div>
+            {[
+              ["Bank", doc.payment_bank_name || customers.find((c) => c.id === doc.customer_id)?.payment_bank_name],
+              ["Account Holder", doc.payment_bank_account_name || customers.find((c) => c.id === doc.customer_id)?.payment_bank_account_name],
+              ["Account Number", doc.payment_bank_account_number || customers.find((c) => c.id === doc.customer_id)?.payment_bank_account_number],
+              ["Branch", doc.payment_bank_branch || customers.find((c) => c.id === doc.customer_id)?.payment_bank_branch],
+            ].filter((entry) => entry[1]).map(([label, value]) => (
+              <div key={label} className="text-sm"><span className="text-muted-foreground">{label}: </span><span className="font-medium">{value}</span></div>
+            ))}
+            {!doc.payment_bank_name && !doc.payment_bank_account_name && !doc.payment_bank_account_number && !customers.find((c) => c.id === doc.customer_id)?.payment_bank_name && !customers.find((c) => c.id === doc.customer_id)?.payment_bank_account_number && (
+              <p className="text-xs text-muted-foreground">Belum diatur. Lengkapi rekening penerima di halaman Customers.</p>
             )}
           </div>
         </div>

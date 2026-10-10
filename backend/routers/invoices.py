@@ -52,8 +52,19 @@ async def list_invoices(q: str = "", status: str = "", customer_id: str = "", pa
 @router.post("")
 async def create_invoice(payload: InvoiceCreate, user: dict = Depends(get_current_user)):
     db = get_db()
-    number = await next_number("invoice")
     doc = payload.model_dump()
+    if doc.get("project_id"):
+        project = await db.projects.find_one({"id": doc["project_id"]}, {"_id": 0, "id": 1, "customer_id": 1})
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+        doc["customer_id"] = project["customer_id"]
+    customer = await db.customers.find_one({"id": doc.get("customer_id")}, {"_id": 0})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    for field in ("payment_terms", "payment_bank_name", "payment_bank_account_name", "payment_bank_account_number", "payment_bank_branch"):
+        if not doc.get(field):
+            doc[field] = customer.get(field, "") or ""
+    number = await next_number("invoice")
     doc.update({
         "id": new_id(),
         "number": number,
@@ -73,11 +84,13 @@ async def create_from_quotation(qid: str, user: dict = Depends(get_current_user)
     q = await db.quotations.find_one({"id": qid}, {"_id": 0})
     if not q:
         raise HTTPException(status_code=404, detail="Quotation not found")
+    customer = await db.customers.find_one({"id": q.get("customer_id")}, {"_id": 0}) or {}
     number = await next_number("invoice")
     doc = {
         "id": new_id(),
         "number": number,
         "customer_id": q["customer_id"],
+        "project_id": q.get("project_id", ""),
         "quotation_id": qid,
         "date": q.get("date", ""),
         "due_date": "",
@@ -85,12 +98,19 @@ async def create_from_quotation(qid: str, user: dict = Depends(get_current_user)
         "items": q.get("items", []),
         "notes": q.get("notes", ""),
         "payment_terms": q.get("payment_terms", ""),
+        "payment_bank_name": q.get("payment_bank_name", ""),
+        "payment_bank_account_name": q.get("payment_bank_account_name", ""),
+        "payment_bank_account_number": q.get("payment_bank_account_number", ""),
+        "payment_bank_branch": q.get("payment_bank_branch", ""),
         "status": "unpaid",
         "paid_amount": 0,
         "created_at": utc_now_iso(),
         "updated_at": utc_now_iso(),
         "created_by": user["id"],
     }
+    for field in ("payment_terms", "payment_bank_name", "payment_bank_account_name", "payment_bank_account_number", "payment_bank_branch"):
+        if not doc.get(field):
+            doc[field] = customer.get(field, "") or ""
     await db.invoices.insert_one(doc)
     doc.pop("_id", None)
     await log_activity(user, "create", "invoices", f"Invoice {number} from Quotation {q['number']}")
@@ -112,7 +132,24 @@ async def get_invoice(iid: str, user: dict = Depends(get_current_user)):
 @router.put("/{iid}")
 async def update_invoice(iid: str, payload: InvoiceUpdate, user: dict = Depends(get_current_user)):
     db = get_db()
+    existing = await db.invoices.find_one({"id": iid}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Not found")
     updates = {k: v for k, v in payload.model_dump().items() if v is not None}
+    if updates.get("project_id"):
+        project = await db.projects.find_one({"id": updates["project_id"]}, {"_id": 0, "customer_id": 1})
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+        updates["customer_id"] = project["customer_id"]
+    elif "customer_id" in updates and updates.get("customer_id"):
+        updates["project_id"] = ""
+    if "customer_id" in updates or "project_id" in updates:
+        customer = await db.customers.find_one({"id": updates.get("customer_id", existing.get("customer_id"))}, {"_id": 0})
+        if not customer:
+            raise HTTPException(status_code=404, detail="Customer not found")
+        for field in ("payment_terms", "payment_bank_name", "payment_bank_account_name", "payment_bank_account_number", "payment_bank_branch"):
+            if not updates.get(field):
+                updates[field] = customer.get(field, "") or ""
     updates["updated_at"] = utc_now_iso()
     r = await db.invoices.update_one({"id": iid}, {"$set": updates})
     if r.matched_count == 0:
@@ -153,6 +190,9 @@ async def invoice_pdf(iid: str, user: dict = Depends(get_current_user)):
     if not doc:
         raise HTTPException(status_code=404, detail="Not found")
     customer = await db.customers.find_one({"id": doc.get("customer_id")}, {"_id": 0}) or {}
+    if doc.get("project_id"):
+        project = await db.projects.find_one({"id": doc["project_id"]}, {"_id": 0, "name": 1}) or {}
+        doc["project_name"] = project.get("name", "")
     settings = await db.settings.find_one({"id": "global"}, {"_id": 0}) or {}
     content = build_document_pdf("invoice", doc, customer, settings)
     await log_activity(user, "export_pdf", "invoices", f"Invoice {doc.get('number')} PDF")

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -149,7 +149,10 @@ export default function LoginPage() {
                 />
                 <span>Remember me</span>
               </label>
-              <span className="text-xs text-muted-foreground">Session times out automatically</span>
+              <div className="flex flex-col items-end gap-1">
+                <Link to="/reset-password" className="text-sm text-primary hover:underline" data-testid="forgot-password-link">Forgot password?</Link>
+                <span className="text-xs text-muted-foreground">Session times out automatically</span>
+              </div>
             </div>
 
             {error && (

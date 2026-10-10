@@ -1,6 +1,7 @@
 """PDF generation service for quotations and invoices using ReportLab."""
 import io
 from datetime import datetime
+from xml.sax.saxutils import escape
 
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -36,6 +37,11 @@ def _fmt_money(v, currency="IDR"):
         return f"{currency} {float(v):,.2f}"
     except Exception:
         return f"{currency} 0.00"
+
+
+def _xml(value):
+    """Escape user-controlled text before passing it to ReportLab Paragraph."""
+    return escape(str(value or "")).replace("\r\n", "\n").replace("\n", "<br/>")
 
 
 def _compute_totals(items):
@@ -74,21 +80,21 @@ def build_document_pdf(kind: str, doc: dict, customer: dict, settings: dict) -> 
 
     # Header table (company left, doc info right)
     header_left = Paragraph(
-        f"<b>{company_name}</b><br/>"
-        f"<font size='8' color='#555555'>{tagline}</font><br/>"
-        f"<font size='8' color='#555555'>{settings.get('company_address','')}</font><br/>"
-        f"<font size='8' color='#555555'>{settings.get('company_email','')} | {settings.get('company_phone','')}</font>",
+        f"<b>{_xml(company_name)}</b><br/>"
+        f"<font size='8' color='#555555'>{_xml(tagline)}</font><br/>"
+        f"<font size='8' color='#555555'>{_xml(settings.get('company_address',''))}</font><br/>"
+        f"<font size='8' color='#555555'>{_xml(settings.get('company_email',''))} | {_xml(settings.get('company_phone',''))}</font>",
         ss["Body9"],
     )
     doc_info_rows = [
         [Paragraph(f"<b>{title}</b>", ss["TitleBig"])],
-        [Paragraph(f"<b>No.</b> {doc.get('number','')}", ss["Body9"])],
-        [Paragraph(f"<b>Date</b> {doc.get('date','')}", ss["Body9"])],
+        [Paragraph(f"<b>No.</b> {_xml(doc.get('number',''))}", ss["Body9"])],
+        [Paragraph(f"<b>Date</b> {_xml(doc.get('date',''))}", ss["Body9"])],
     ]
     if kind == "quotation":
-        doc_info_rows.append([Paragraph(f"<b>Valid Until</b> {doc.get('valid_until','')}", ss["Body9"])])
+        doc_info_rows.append([Paragraph(f"<b>Valid Until</b> {_xml(doc.get('valid_until',''))}", ss["Body9"])])
     else:
-        doc_info_rows.append([Paragraph(f"<b>Due Date</b> {doc.get('due_date','')}", ss["Body9"])])
+        doc_info_rows.append([Paragraph(f"<b>Due Date</b> {_xml(doc.get('due_date',''))}", ss["Body9"])])
 
     doc_info = Table(doc_info_rows, colWidths=[70 * mm])
     doc_info.setStyle(TableStyle([("ALIGN", (0, 0), (-1, -1), "RIGHT")]))
@@ -105,12 +111,14 @@ def build_document_pdf(kind: str, doc: dict, customer: dict, settings: dict) -> 
     # Bill To
     story.append(Paragraph("BILL TO", ss["Label"]))
     story.append(Paragraph(
-        f"<b>{customer.get('company_name','')}</b><br/>"
-        f"{customer.get('pic_name','')} — {customer.get('position','')}<br/>"
-        f"{customer.get('address','')}<br/>"
-        f"{customer.get('email','')} | {customer.get('phone','')}",
+        f"<b>{_xml(customer.get('company_name',''))}</b><br/>"
+        f"{_xml(customer.get('pic_name',''))} — {_xml(customer.get('position',''))}<br/>"
+        f"{_xml(customer.get('address',''))}<br/>"
+        f"{_xml(customer.get('email',''))} | {_xml(customer.get('phone',''))}",
         ss["Body9"],
     ))
+    if doc.get("project_name"):
+        story.append(Paragraph(f"<b>Project:</b> {_xml(doc.get('project_name'))}", ss["Body9"]))
     story.append(Spacer(1, 6 * mm))
 
     # Items table
@@ -123,9 +131,9 @@ def build_document_pdf(kind: str, doc: dict, customer: dict, settings: dict) -> 
         line = qty * up * (1 - disc / 100) * (1 + tax / 100)
         name = it.get("product_name", "")
         desc = it.get("description", "")
-        cell = f"<b>{name}</b>"
+        cell = f"<b>{_xml(name)}</b>"
         if desc:
-            cell += f"<br/><font size='8' color='#555555'>{desc}</font>"
+            cell += f"<br/><font size='8' color='#555555'>{_xml(desc)}</font>"
         table_data.append([
             str(i),
             Paragraph(cell, ss["Body9"]),
@@ -175,21 +183,36 @@ def build_document_pdf(kind: str, doc: dict, customer: dict, settings: dict) -> 
     story.append(totals)
     story.append(Spacer(1, 8 * mm))
 
-    # Notes / footer
+    # Notes / payment instructions. Prefer the document snapshot so old PDFs remain stable.
     footer_bits = []
     if doc.get("notes"):
-        footer_bits.append(f"<b>Notes:</b> {doc.get('notes','')}")
-    if doc.get("payment_terms"):
-        footer_bits.append(f"<b>Payment Terms:</b> {doc.get('payment_terms','')}")
+        footer_bits.append(f"<b>Notes:</b> {_xml(doc.get('notes',''))}")
+    payment_terms = doc.get("payment_terms") or customer.get("payment_terms", "")
+    if payment_terms:
+        footer_bits.append(f"<b>Payment Terms:</b> {_xml(payment_terms)}")
     if kind == "quotation" and doc.get("delivery_time"):
-        footer_bits.append(f"<b>Delivery Time:</b> {doc.get('delivery_time','')}")
+        footer_bits.append(f"<b>Delivery Time:</b> {_xml(doc.get('delivery_time',''))}")
     for line in footer_bits:
         story.append(Paragraph(line, ss["Body9"]))
         story.append(Spacer(1, 2 * mm))
 
+    bank_fields = [
+        ("Bank", doc.get("payment_bank_name") or customer.get("payment_bank_name", "")),
+        ("Account Holder", doc.get("payment_bank_account_name") or customer.get("payment_bank_account_name", "")),
+        ("Account Number", doc.get("payment_bank_account_number") or customer.get("payment_bank_account_number", "")),
+        ("Branch", doc.get("payment_bank_branch") or customer.get("payment_bank_branch", "")),
+    ]
+    bank_fields = [(label, value) for label, value in bank_fields if value]
+    if bank_fields:
+        story.append(Paragraph("PAYMENT / BANK TRANSFER DETAILS", ss["Label"]))
+        story.append(Spacer(1, 2 * mm))
+        for label, value in bank_fields:
+            story.append(Paragraph(f"<b>{label}:</b> {_xml(value)}", ss["Body9"]))
+            story.append(Spacer(1, 1.5 * mm))
+
     story.append(Spacer(1, 10 * mm))
     story.append(Paragraph(
-        f"<font size='8' color='#555555'>Generated by {company_name} — {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}</font>",
+        f"<font size='8' color='#555555'>Generated by {_xml(company_name)} — {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}</font>",
         ss["Muted"],
     ))
 

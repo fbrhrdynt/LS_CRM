@@ -53,8 +53,19 @@ async def list_quotations(q: str = "", status: str = "", customer_id: str = "", 
 @router.post("")
 async def create_quotation(payload: QuotationCreate, user: dict = Depends(get_current_user)):
     db = get_db()
-    number = await next_number("quotation")
     doc = payload.model_dump()
+    if doc.get("project_id"):
+        project = await db.projects.find_one({"id": doc["project_id"]}, {"_id": 0, "id": 1, "customer_id": 1})
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+        doc["customer_id"] = project["customer_id"]
+    customer = await db.customers.find_one({"id": doc.get("customer_id")}, {"_id": 0})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    for field in ("payment_terms", "payment_bank_name", "payment_bank_account_name", "payment_bank_account_number", "payment_bank_branch"):
+        if not doc.get(field):
+            doc[field] = customer.get(field, "") or ""
+    number = await next_number("quotation")
     doc.update({
         "id": new_id(),
         "number": number,
@@ -83,7 +94,24 @@ async def get_quotation(qid: str, user: dict = Depends(get_current_user)):
 @router.put("/{qid}")
 async def update_quotation(qid: str, payload: QuotationUpdate, user: dict = Depends(get_current_user)):
     db = get_db()
+    existing = await db.quotations.find_one({"id": qid}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Not found")
     updates = {k: v for k, v in payload.model_dump().items() if v is not None}
+    if updates.get("project_id"):
+        project = await db.projects.find_one({"id": updates["project_id"]}, {"_id": 0, "customer_id": 1})
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+        updates["customer_id"] = project["customer_id"]
+    elif "customer_id" in updates and updates.get("customer_id"):
+        updates["project_id"] = ""
+    if "customer_id" in updates or "project_id" in updates:
+        customer = await db.customers.find_one({"id": updates.get("customer_id", existing.get("customer_id"))}, {"_id": 0})
+        if not customer:
+            raise HTTPException(status_code=404, detail="Customer not found")
+        for field in ("payment_terms", "payment_bank_name", "payment_bank_account_name", "payment_bank_account_number", "payment_bank_branch"):
+            if not updates.get(field):
+                updates[field] = customer.get(field, "") or ""
     updates["updated_at"] = utc_now_iso()
     r = await db.quotations.update_one({"id": qid}, {"$set": updates})
     if r.matched_count == 0:
@@ -124,6 +152,9 @@ async def quotation_pdf(qid: str, user: dict = Depends(get_current_user)):
     if not doc:
         raise HTTPException(status_code=404, detail="Not found")
     customer = await db.customers.find_one({"id": doc.get("customer_id")}, {"_id": 0}) or {}
+    if doc.get("project_id"):
+        project = await db.projects.find_one({"id": doc["project_id"]}, {"_id": 0, "name": 1}) or {}
+        doc["project_name"] = project.get("name", "")
     settings = await db.settings.find_one({"id": "global"}, {"_id": 0}) or {}
     content = build_document_pdf("quotation", doc, customer, settings)
     await log_activity(user, "export_pdf", "quotations", f"Quotation {doc.get('number')} PDF")

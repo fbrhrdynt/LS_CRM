@@ -37,11 +37,27 @@ async def init_db():
     await db.logi_licenses.create_index("license_key", unique=True)
     await db.logi_activations.create_index([("license_id", 1), ("fingerprint", 1)], unique=True)
     await db.logi_checks.create_index([("license_id", 1), ("timestamp", -1)])
+    await db.amt_releases.create_index(
+        [("product_slug", 1), ("channel", 1), ("version", 1)],
+        unique=True,
+        name="uniq_amt_release_product_channel_version",
+    )
+    await db.amt_releases.create_index(
+        [("product_slug", 1), ("channel", 1), ("status", 1)],
+        name="idx_amt_release_lookup",
+    )
+    await db.amt_update_checks.create_index(
+        [("timestamp", -1)],
+        name="idx_amt_update_checks_timestamp",
+    )
     await db.auth_sessions.create_index("jti", unique=True)
     await db.auth_sessions.create_index("user_id")
     await db.auth_sessions.create_index("expires_at", expireAfterSeconds=0)
     await db.rate_limits.create_index("key", unique=True)
     await db.rate_limits.create_index("expires_at", expireAfterSeconds=0)
+    await db.password_reset_tokens.create_index("token_hash", unique=True)
+    await db.password_reset_tokens.create_index("expires_at", expireAfterSeconds=0)
+    await db.password_reset_tokens.create_index("user_id")
 
     # Seed admin
     admin_email = os.environ["ADMIN_EMAIL"].lower()

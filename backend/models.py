@@ -47,6 +47,15 @@ class ChangePasswordIn(BaseModel):
     new_password: str = Field(min_length=12, max_length=128)
 
 
+class ForgotPasswordIn(BaseModel):
+    email: EmailStr
+
+
+class CompletePasswordResetIn(BaseModel):
+    token: str = Field(min_length=20, max_length=256)
+    new_password: str = Field(min_length=12, max_length=128)
+
+
 # ---------- CUSTOMERS ----------
 class CustomerBase(BaseModel):
     company_name: str
@@ -57,7 +66,11 @@ class CustomerBase(BaseModel):
     address: Optional[str] = ""
     website: Optional[str] = ""
     notes: Optional[str] = ""
-
+    payment_bank_name: Optional[str] = ""
+    payment_bank_account_name: Optional[str] = ""
+    payment_bank_account_number: Optional[str] = ""
+    payment_bank_branch: Optional[str] = ""
+    payment_terms: Optional[str] = ""
 
 class CustomerCreate(CustomerBase):
     code: Optional[str] = None
@@ -72,7 +85,11 @@ class CustomerUpdate(BaseModel):
     address: Optional[str] = None
     website: Optional[str] = None
     notes: Optional[str] = None
-
+    payment_bank_name: Optional[str] = None
+    payment_bank_account_name: Optional[str] = None
+    payment_bank_account_number: Optional[str] = None
+    payment_bank_branch: Optional[str] = None
+    payment_terms: Optional[str] = None
 
 # ---------- PRODUCTS ----------
 class ProductBase(BaseModel):
@@ -144,12 +161,17 @@ class LineItem(BaseModel):
 
 class QuotationBase(BaseModel):
     customer_id: str
+    project_id: Optional[str] = ""
     date: str  # ISO date
     valid_until: Optional[str] = ""
     currency: str = "IDR"
     items: List[LineItem] = []
     notes: Optional[str] = ""
     payment_terms: Optional[str] = ""
+    payment_bank_name: Optional[str] = ""
+    payment_bank_account_name: Optional[str] = ""
+    payment_bank_account_number: Optional[str] = ""
+    payment_bank_branch: Optional[str] = ""
     delivery_time: Optional[str] = ""
 
 
@@ -160,12 +182,17 @@ class QuotationCreate(QuotationBase):
 class QuotationUpdate(BaseModel):
     model_config = ConfigDict(extra="ignore")
     customer_id: Optional[str] = None
+    project_id: Optional[str] = None
     date: Optional[str] = None
     valid_until: Optional[str] = None
     currency: Optional[str] = None
     items: Optional[List[LineItem]] = None
     notes: Optional[str] = None
     payment_terms: Optional[str] = None
+    payment_bank_name: Optional[str] = None
+    payment_bank_account_name: Optional[str] = None
+    payment_bank_account_number: Optional[str] = None
+    payment_bank_branch: Optional[str] = None
     delivery_time: Optional[str] = None
     status: Optional[Literal["draft", "sent", "approved", "rejected"]] = None
 
@@ -173,6 +200,7 @@ class QuotationUpdate(BaseModel):
 # ---------- INVOICES ----------
 class InvoiceBase(BaseModel):
     customer_id: str
+    project_id: Optional[str] = ""
     quotation_id: Optional[str] = ""
     date: str
     due_date: Optional[str] = ""
@@ -180,6 +208,10 @@ class InvoiceBase(BaseModel):
     items: List[LineItem] = []
     notes: Optional[str] = ""
     payment_terms: Optional[str] = ""
+    payment_bank_name: Optional[str] = ""
+    payment_bank_account_name: Optional[str] = ""
+    payment_bank_account_number: Optional[str] = ""
+    payment_bank_branch: Optional[str] = ""
 
 
 class InvoiceCreate(InvoiceBase):
@@ -190,12 +222,17 @@ class InvoiceCreate(InvoiceBase):
 class InvoiceUpdate(BaseModel):
     model_config = ConfigDict(extra="ignore")
     customer_id: Optional[str] = None
+    project_id: Optional[str] = None
     date: Optional[str] = None
     due_date: Optional[str] = None
     currency: Optional[str] = None
     items: Optional[List[LineItem]] = None
     notes: Optional[str] = None
     payment_terms: Optional[str] = None
+    payment_bank_name: Optional[str] = None
+    payment_bank_account_name: Optional[str] = None
+    payment_bank_account_number: Optional[str] = None
+    payment_bank_branch: Optional[str] = None
     status: Optional[Literal["draft", "unpaid", "partial", "paid", "cancelled"]] = None
     paid_amount: Optional[float] = Field(default=None, ge=0)
 
@@ -234,6 +271,7 @@ class ProjectUpdate(BaseModel):
 class AccountBase(BaseModel):
     name: str
     category: str = "Custom"
+    visibility: Literal["private", "shared"] = "private"
     customer_id: Optional[str] = ""
     project_id: Optional[str] = ""
     username: Optional[str] = ""
@@ -260,6 +298,7 @@ class AccountUpdate(BaseModel):
     model_config = ConfigDict(extra="ignore")
     name: Optional[str] = None
     category: Optional[str] = None
+    visibility: Optional[Literal["private", "shared"]] = None
     customer_id: Optional[str] = None
     project_id: Optional[str] = None
     username: Optional[str] = None

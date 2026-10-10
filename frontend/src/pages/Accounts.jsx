@@ -35,7 +35,7 @@ const CATEGORY_STYLES = {
 };
 
 const EMPTY = {
-  name: "", category: "Custom", customer_id: "", project_id: "",
+  name: "", category: "Custom", visibility: "private", customer_id: "", project_id: "",
   username: "", email: "", password: "", login_url: "",
   recovery_email: "", recovery_phone: "",
   registration_number: "", license_key: "", subscription_id: "",
@@ -79,7 +79,7 @@ export default function Accounts() {
     setEditingId(r.id); setShowPwd(false);
     // fetch full then reveal secrets on demand
     const { data: full } = await api.get(`/accounts/${r.id}`);
-    setForm({ ...EMPTY, ...full, password: "", api_key: "", secret_key: "" });
+    setForm({ ...EMPTY, ...full, visibility: full.visibility || "shared", password: "", api_key: "", secret_key: "" });
     setDlgOpen(true);
   };
 
@@ -173,6 +173,9 @@ export default function Accounts() {
                     <div className="min-w-0">
                       <div className="font-display font-medium truncate">{r.name}</div>
                       <div className="text-xs text-muted-foreground truncate">{r.customer_name || "Internal"}</div>
+                      <div className={`mt-1 text-[10px] uppercase tracking-widest font-semibold ${r.visibility === "private" ? "text-amber-600" : "text-emerald-600"}`} data-testid={`account-${r.id}-visibility`}>
+                        {r.visibility === "private" ? "Private · Only you" : "Shared · Vault users"}
+                      </div>
                     </div>
                     <span className={`text-[10px] uppercase tracking-widest font-semibold px-2 py-0.5 border rounded-sm ${catStyle}`}>{r.category}</span>
                   </div>
@@ -204,7 +207,7 @@ export default function Accounts() {
 
                   <div className="border-t border-border p-2 flex items-center justify-end gap-1">
                     <Button variant="ghost" size="icon" onClick={() => openEdit(r)}><Pencil className="h-4 w-4" strokeWidth={1.5} /></Button>
-                    {isAdmin && <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setToDelete(r)}><Trash2 className="h-4 w-4" strokeWidth={1.5} /></Button>}
+                    {(isAdmin || (r.visibility === "private" && r.created_by_user_id === user?.id)) && <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setToDelete(r)}><Trash2 className="h-4 w-4" strokeWidth={1.5} /></Button>}
                   </div>
                 </div>
               );
@@ -236,6 +239,22 @@ export default function Accounts() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
               </Select>
+            </Field>
+            <Field label="Visibility" span={2}>
+              <Select
+                value={form.visibility || "private"}
+                onValueChange={(v) => setForm({ ...form, visibility: v })}
+                disabled={Boolean(editingId && !isAdmin && form.created_by_user_id !== user?.id)}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="private">Private — only you can see this</SelectItem>
+                  <SelectItem value="shared">Shared — all Credential Vault users</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Private credentials are visible only to their creator, including admins. Shared credentials are visible to all users with Credential Vault access.
+              </p>
             </Field>
             <Field label="Customer">
               <Select value={form.customer_id || "__none"} onValueChange={(v) => setForm({ ...form, customer_id: v === "__none" ? "" : v })}>

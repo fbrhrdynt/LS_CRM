@@ -62,7 +62,7 @@ async def get_project(pid: str, user: dict = Depends(get_current_user)):
     else:
         doc["products"] = []
     if doc.get("account_ids"):
-        docs = await db.accounts.find({"id": {"$in": doc["account_ids"]}}, {"_id": 0}).to_list(500)
+        docs = await db.accounts.find({"$and": [{"id": {"$in": doc["account_ids"]}}, {"$or": [{"visibility": {"$ne": "private"}}, {"created_by_user_id": user["id"]}]}]}, {"_id": 0}).to_list(500)
         for a in docs:
             a.pop("password", None)
             a.pop("api_key", None)

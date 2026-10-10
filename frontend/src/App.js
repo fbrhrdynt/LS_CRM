@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppLayout from "@/components/layout/AppLayout";
 import LoginPage from "@/pages/Login";
+import ResetPasswordPage from "@/pages/ResetPassword";
 import Dashboard from "@/pages/Dashboard";
 import Customers from "@/pages/Customers";
 import Products from "@/pages/Products";
@@ -19,6 +20,7 @@ import Accounts from "@/pages/Accounts";
 import Licenses from "@/pages/Licenses";
 import LogiLicense from "@/pages/LogiLicense";
 import LogiLicenseDetail from "@/pages/LogiLicenseDetail";
+import AMTReleases from "@/pages/AMTReleases";
 import Users from "@/pages/Users";
 import Settings from "@/pages/Settings";
 import ActivityLogs from "@/pages/ActivityLogs";
@@ -31,6 +33,7 @@ function App() {
       <Toaster richColors position="top-right" closeButton />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route index element={<Dashboard />} />
           <Route path="customers" element={<P name="customers"><Customers /></P>} />
@@ -47,6 +50,7 @@ function App() {
           <Route path="licenses" element={<P name="licenses"><Licenses /></P>} />
           <Route path="logi-license" element={<P name="logi_license"><LogiLicense /></P>} />
           <Route path="logi-license/:id" element={<P name="logi_license"><LogiLicenseDetail /></P>} />
+          <Route path="amt-releases" element={<P name="amt_releases"><AMTReleases /></P>} />
           <Route path="activity-logs" element={<P name="activity_logs"><ActivityLogs /></P>} />
           <Route path="users" element={<ProtectedRoute adminOnly><Users /></ProtectedRoute>} />
           <Route path="settings" element={<ProtectedRoute adminOnly><Settings /></ProtectedRoute>} />
